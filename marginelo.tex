@@ -1,4 +1,4 @@
-\documentclass[aps,prc,reprint,amsmath]{revtex4-1}
+\documentclass[aps,prc,reprint,amsmath,superscriptaddress]{revtex4-1}
 
 \usepackage{hyperref}
 \usepackage{graphicx}
@@ -10,17 +10,98 @@
 
 \author{J.\ Scott Moreland}
 \author{Matt Superdock}
+
 \affiliation{Department of Physics, Duke University, Durham, NC 27708-0305}
+\affiliation{Department of Computer Science, Carnegie Mellon University, Pittsburgh, PA 15213}
 
 \date{\today}
 
 
 \begin{abstract}
-  Abstract
+  The ELO rating system is a highly successful ranking algorithm for games of skill where, by construction, one team wins and the other loses.
+  A primary limitation of present implementations of the ELO algorithm is the ability to predict information beyond a match's win-loss probability.
+  For example, in the traditional ELO system the victor is awarded the same point bounty if he beats a team by 1 point or 10 points; only the relative rating of his opponent affects the match bounty.
+
+Previous efforts to extend the ELO system to incorporate margin-of-victory information have relied on adhoc assumptions which do not converge on the true margin dependent win probability in the relevant limits.
+  In this work, we explain that ELO ratings and predictions can be naturally extended to include margin-of-victory information by simply redefining ``what it means to win''.
+  We create ratings for each value of the margin-of-victory and use these ratings to predict the \emph{full} distribution of point spread outcomes for matches which have not yet been played.
 \end{abstract}
 
 
 \maketitle
 
+\section{Introduction}
 
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam placerat leo at nibh eleifend pulvinar. Proin sed hendrerit arcu, sed varius turpis. Curabitur suscipit sollicitudin dui et ornare. Vivamus ac tempor ipsum. Praesent quis risus sit amet enim scelerisque laoreet eget at lectus. Nullam at libero sodales, accumsan eros vel, dapibus ex. Quisque libero metus, vestibulum ac varius quis, ultricies sollicitudin diam. Fusce blandit venenatis iaculis.
+
+Fusce nec sapien dapibus, bibendum felis vel, gravida lorem. Nam suscipit eros massa, vel faucibus tellus sodales rutrum. Mauris posuere a sapien sed pulvinar. Vivamus ac arcu eget nisl tempus molestie. Donec laoreet tortor eu lorem dignissim lobortis. Cras tristique eget eros sit amet consectetur. Ut lobortis lectus id facilisis porttitor. Integer a faucibus nisi. In euismod, eros at sodales lacinia, ipsum nisi congue tortor, quis porttitor tellus risus at mi. Nulla vel sollicitudin eros, id tempus mi. Nulla ac sapien volutpat, hendrerit tortor et, efficitur nisl. Vestibulum vestibulum magna vitae mattis tincidunt. Mauris in sapien vel lectus scelerisque lacinia sed a ante.
+
+Curabitur ornare tristique enim, feugiat volutpat nulla. Nullam dolor ligula, condimentum eu felis vitae, rutrum cursus lacus. Integer consectetur aliquet mauris in lacinia. Phasellus at massa a est consectetur commodo. Phasellus ultricies lacus hendrerit, tempus sapien sed, sollicitudin risus. Curabitur euismod ipsum est, sagittis lacinia justo ullamcorper porta. Fusce fermentum risus vel leo elementum, a auctor magna vehicula. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Phasellus vitae magna nec odio pretium lacinia. Fusce mauris ipsum, faucibus nec accumsan ut, accumsan et urna. Duis pellentesque convallis leo, vitae molestie diam convallis at. In semper neque ex, eget facilisis erat aliquam sed. In ante lectus, tincidunt eu auctor eu, hendrerit at urna. Nam posuere diam eu lectus consequat elementum. Duis hendrerit, leo vitae vehicula sollicitudin, lectus ante placerat diam, ac egestas purus purus nec velit.
+
+Morbi laoreet lacus a ornare porta. Vestibulum molestie condimentum commodo. Donec tristique nec justo ut aliquet. Praesent et ex ligula. Duis vitae viverra ex, in interdum mi. Nullam condimentum, quam et ullamcorper dignissim, orci nisl maximus sem, blandit efficitur dolor libero ut orci. Maecenas sed aliquet ante. Cras finibus nisi non porta lacinia. Curabitur bibendum mauris urna, in sollicitudin eros semper quis.
+
+Nunc pellentesque consectetur lobortis. Fusce non viverra magna. Vestibulum lacus velit, aliquet sed posuere quis, eleifend ac tortor. Pellentesque at nisl aliquet, dignissim nunc tincidunt, convallis quam. Nullam sed erat elementum, auctor lorem ut, bibendum massa. Maecenas at placerat mi, vitae volutpat neque. Curabitur risus nisi, pretium sed commodo ac, consectetur vel justo. Proin malesuada at leo sit amet fringilla.
+
+\section{ELO rating system}
+
+The ELO system ascribes a power ranking index $\mathcal{R}$ to each competitor (player or team) which can be used to predict the outcome of a future matchup.
+Players with a higher rating are viewed as more likely to win their matchup, and players with a lower rating are more likely to lose.
+The process is fundamentally Bayesian and rating values before and after the match reflect prior and posterior knowledge of each player's performance.
+
+The convention is to initialize all player ratings at ${\mathcal{R}_0 = 1500}$, although this choice is arbitrary.
+As we show momentarily, only the rating difference between two players matters, and hence the ELO rating can be initialized with any starting value.
+
+The ratings of the competitors are then updated iteratively after each matchup.
+Players gain or lose points based on the outcome of the match and the rating difference between the two competitors.
+One is awarded more points for beating a stronger opponent and less points for beating a weaker opponent.
+The points awarded to the victor are deducted from the loser such that the total number of points in the system is always conserved.
+
+More specifically, the victor bounty scales with the degree to which a player exceeds (or falls short of) their expected match performance.
+Let $P_\text{exp}$ denote the expected probability that a team beats their opponent at a neutral venue.
+The bounties that the team and their opponent receive from the outcome of the match are given by,
+\begin{align}
+  \Delta \mathcal{R}_\text{team} &= \kappa \,(P_\text{obs} - P_\text{exp}),\\
+  \Delta \mathcal{R}_\text{opp} &= -\Delta \mathcal{R}_\text{team},
+\end{align}
+where ${P_\text{obs}=1}$ if the team beats their opponent and ${P_\text{obs}=0}$ if the team loses, while $P_\text{obs}=0.5$ is often used if both teams tie.
+The free parameter $\kappa$ modulates the relative weight of prior and posterior information. 
+If $\kappa$ is small, the prior holds significant weight, and it takes many successive wins or losses to move the rating up or down.
+Conversely, when $\kappa$ is large, each win or loss can significantly affect the team's rating.
+Typically, the hyper-parameter $\kappa$ is tuned to optimize the veracity of model predictions by back-testing on historical games.
+
+The expected probability $P_\text{exp}$ that a team beats their opponent is modeled using a logistic function
+\begin{equation}
+  \label{win_prob}
+  P_\text{exp}(\mathcal{R}_\text{team}, \mathcal{R}_\text{opp}) = \frac{1}{10^{-(\mathcal{R}_\text{team} - \mathcal{R}_\text{opp})/\gamma} +1},
+\end{equation}
+where the free parameter $\gamma$ sets the scale of rating differences.
+Much like the starting ELO, the parameter $\gamma$ can take any value and only the ratio $\kappa/\gamma$ is meaningful for observable quantities.
+A common convention is to fix $\gamma=400$ such that a 400 point rating advantage corresponds to a 90\% average win rate.
+
+A primary feature of the ELO system is that the expected win probability $P_\text{exp}$ determined from iteratively updated ELO ratings $\mathcal{R}_\text{team}$ and $\mathcal{R}_\text{opp}$, converges on the \emph{true} win probability of the matchup when the competitors sample scores from independent random variables.
+In the limit of infinitely many games and infinitely small update factor $\kappa$, the ELO calculated win probability is the true win probability.
+
+\section{Margin-of-victory}
+
+The original ELO model was first applied to chess rankings where there is a winner and a loser but no score.
+It can be used effectively to predict the odds with which a player beats his opponent \eqref{win_prob}, and correspondingly---by calculating various outcomes---the odds with which a player advances through a tournament. 
+
+The model is easily extended to point based games by ignoring the margin-of-victory and only considering wins and losses.
+Notably, it has been used to forecast NFL and NBA team performance on the analytics and news platform \emph{fivethirtyeight} \footnote{for an extensive list of ELO use cases see \ref{?}}.
+
+One shortcoming of the model is that it does not predict the expected or median point spreads which are often used to set betting lines.
+More generally, the task of predicting individual point outcomes (or some other quantity) using the ELO method is an interesting one itself.
+
+We propose, for this purpose, a new method to extend ELO ratings and calculate the full probability distribution of allowable point spreads.
+The crux of the model is the insight that ELO ratings only require actors which compete to win games and that ``winning'' is a subjective criteria, typically defined as
+\begin{equation}
+  \text{win}: \text{points scored} - \text{points allowed} > 0.
+\end{equation}
+This is a fair or democratic win criteria as it gives each competitor a level playing field.
+Nevertheless, it is equally easy to define the win criteria as
+\begin{align}
+  \text{win}: \text{points scored} &- \text{points allowed} > 1, \\
+  \text{win}: \text{points scored} &- \text{points allowed} > 2, \\
+  \text{win}: \text{points scored} &- \text{points allowed} > n.
+\end{align}
 \end{document}
