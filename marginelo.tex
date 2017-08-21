@@ -4,26 +4,27 @@
 \usepackage{graphicx}
 \graphicspath{{fig/}}
 
+\newcommand{\R}{\mathcal{R}}
+
 \begin{document}
 
 \title{Predicting outcomes in games of skill by redefining what it means to win}
 
 \author{J.\ Scott Moreland}
-\author{Matt Superdock}
-
 \affiliation{Department of Physics, Duke University, Durham, NC 27708-0305}
+\author{Matthew C.\ Superdock}
 \affiliation{Department of Computer Science, Carnegie Mellon University, Pittsburgh, PA 15213}
 
 \date{\today}
 
 
 \begin{abstract}
-  The ELO rating system is a highly successful ranking algorithm for games of skill where, by construction, one team wins and the other loses.
-  A primary limitation of present implementations of the ELO algorithm is the ability to predict information beyond a match's win-loss probability.
-  For example, in the traditional ELO system the victor is awarded the same point bounty if he beats a team by 1 point or 10 points; only the relative rating of his opponent affects the match bounty.
+  The Elo rating system is a highly successful ranking algorithm for games of skill where, by construction, one team wins and the other loses.
+  A primary limitation of present implementations of the Elo algorithm is the ability to predict information beyond a match's win-loss probability.
+  For example, in the traditional Elo system the victor is awarded the same point bounty if he beats a team by 1 point or 10 points; only the relative rating of his opponent affects the match bounty.
 
-Previous efforts to extend the ELO system to incorporate margin-of-victory information have relied on adhoc assumptions which do not converge on the true margin dependent win probability in the relevant limits.
-  In this work, we explain that ELO ratings and predictions can be naturally extended to include margin-of-victory information by simply redefining ``what it means to win''.
+Previous efforts to extend the Elo system to incorporate margin-of-victory information have relied on adhoc assumptions which do not converge on the true margin dependent win probability in the relevant limits.
+  In this work, we explain that Elo ratings and predictions can be naturally extended to include margin-of-victory information by simply redefining ``what it means to win''.
   We create ratings for each value of the margin-of-victory and use these ratings to predict the \emph{full} distribution of point spread outcomes for matches which have not yet been played.
 \end{abstract}
 
@@ -32,24 +33,15 @@ Previous efforts to extend the ELO system to incorporate margin-of-victory infor
 
 \section{Introduction}
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam placerat leo at nibh eleifend pulvinar. Proin sed hendrerit arcu, sed varius turpis. Curabitur suscipit sollicitudin dui et ornare. Vivamus ac tempor ipsum. Praesent quis risus sit amet enim scelerisque laoreet eget at lectus. Nullam at libero sodales, accumsan eros vel, dapibus ex. Quisque libero metus, vestibulum ac varius quis, ultricies sollicitudin diam. Fusce blandit venenatis iaculis.
 
-Fusce nec sapien dapibus, bibendum felis vel, gravida lorem. Nam suscipit eros massa, vel faucibus tellus sodales rutrum. Mauris posuere a sapien sed pulvinar. Vivamus ac arcu eget nisl tempus molestie. Donec laoreet tortor eu lorem dignissim lobortis. Cras tristique eget eros sit amet consectetur. Ut lobortis lectus id facilisis porttitor. Integer a faucibus nisi. In euismod, eros at sodales lacinia, ipsum nisi congue tortor, quis porttitor tellus risus at mi. Nulla vel sollicitudin eros, id tempus mi. Nulla ac sapien volutpat, hendrerit tortor et, efficitur nisl. Vestibulum vestibulum magna vitae mattis tincidunt. Mauris in sapien vel lectus scelerisque lacinia sed a ante.
+\section{Elo rating system}
 
-Curabitur ornare tristique enim, feugiat volutpat nulla. Nullam dolor ligula, condimentum eu felis vitae, rutrum cursus lacus. Integer consectetur aliquet mauris in lacinia. Phasellus at massa a est consectetur commodo. Phasellus ultricies lacus hendrerit, tempus sapien sed, sollicitudin risus. Curabitur euismod ipsum est, sagittis lacinia justo ullamcorper porta. Fusce fermentum risus vel leo elementum, a auctor magna vehicula. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Phasellus vitae magna nec odio pretium lacinia. Fusce mauris ipsum, faucibus nec accumsan ut, accumsan et urna. Duis pellentesque convallis leo, vitae molestie diam convallis at. In semper neque ex, eget facilisis erat aliquam sed. In ante lectus, tincidunt eu auctor eu, hendrerit at urna. Nam posuere diam eu lectus consequat elementum. Duis hendrerit, leo vitae vehicula sollicitudin, lectus ante placerat diam, ac egestas purus purus nec velit.
-
-Morbi laoreet lacus a ornare porta. Vestibulum molestie condimentum commodo. Donec tristique nec justo ut aliquet. Praesent et ex ligula. Duis vitae viverra ex, in interdum mi. Nullam condimentum, quam et ullamcorper dignissim, orci nisl maximus sem, blandit efficitur dolor libero ut orci. Maecenas sed aliquet ante. Cras finibus nisi non porta lacinia. Curabitur bibendum mauris urna, in sollicitudin eros semper quis.
-
-Nunc pellentesque consectetur lobortis. Fusce non viverra magna. Vestibulum lacus velit, aliquet sed posuere quis, eleifend ac tortor. Pellentesque at nisl aliquet, dignissim nunc tincidunt, convallis quam. Nullam sed erat elementum, auctor lorem ut, bibendum massa. Maecenas at placerat mi, vitae volutpat neque. Curabitur risus nisi, pretium sed commodo ac, consectetur vel justo. Proin malesuada at leo sit amet fringilla.
-
-\section{ELO rating system}
-
-The ELO system ascribes a power ranking index $\mathcal{R}$ to each competitor (player or team) which can be used to predict the outcome of a future matchup.
+The Elo system ascribes a power ranking index $\R$ to each competitor (player or team) which can be used to predict the outcome of a future matchup.
 Players with a higher rating are viewed as more likely to win their matchup, and players with a lower rating are more likely to lose.
 The process is fundamentally Bayesian and rating values before and after the match reflect prior and posterior knowledge of each player's performance.
 
-The convention is to initialize all player ratings at ${\mathcal{R}_0 = 1500}$, although this choice is arbitrary.
-As we show momentarily, only the rating difference between two players matters, and hence the ELO rating can be initialized with any starting value.
+The convention is to initialize all player ratings at ${\R_0 = 1500}$, although this choice is arbitrary.
+As we show momentarily, only the rating difference between two players matters, and hence the Elo rating can be initialized with any starting value.
 
 The ratings of the competitors are then updated iteratively after each matchup.
 Players gain or lose points based on the outcome of the match and the rating difference between the two competitors.
@@ -60,8 +52,9 @@ More specifically, the victor bounty scales with the degree to which a player ex
 Let $P_\text{exp}$ denote the expected probability that a team beats their opponent at a neutral venue.
 The bounties that the team and their opponent receive from the outcome of the match are given by,
 \begin{align}
-  \Delta \mathcal{R}_\text{team} &= \kappa \,(P_\text{obs} - P_\text{exp}),\\
-  \Delta \mathcal{R}_\text{opp} &= -\Delta \mathcal{R}_\text{team},
+  \label{elo}
+  \Delta \R_\text{team} &= \kappa \,(P_\text{obs} - P_\text{exp}),\\
+  \Delta \R_\text{opp} &= -\Delta \R_\text{team},
 \end{align}
 where ${P_\text{obs}=1}$ if the team beats their opponent and ${P_\text{obs}=0}$ if the team loses, while $P_\text{obs}=0.5$ is often used if both teams tie.
 The free parameter $\kappa$ modulates the relative weight of prior and posterior information. 
@@ -72,36 +65,107 @@ Typically, the hyper-parameter $\kappa$ is tuned to optimize the veracity of mod
 The expected probability $P_\text{exp}$ that a team beats their opponent is modeled using a logistic function
 \begin{equation}
   \label{win_prob}
-  P_\text{exp}(\mathcal{R}_\text{team}, \mathcal{R}_\text{opp}) = \frac{1}{10^{-(\mathcal{R}_\text{team} - \mathcal{R}_\text{opp})/\gamma} +1},
+  P_\text{exp}(\R_\text{team}, \R_\text{opp}) = \frac{1}{10^{-(\R_\text{team} - \R_\text{opp})/\gamma} +1},
 \end{equation}
 where the free parameter $\gamma$ sets the scale of rating differences.
-Much like the starting ELO, the parameter $\gamma$ can take any value and only the ratio $\kappa/\gamma$ is meaningful for observable quantities.
+Much like the starting Elo, the parameter $\gamma$ can take any value and only the ratio $\kappa/\gamma$ is meaningful for observable quantities.
 A common convention is to fix $\gamma=400$ such that a 400 point rating advantage corresponds to a 90\% average win rate.
 
-A primary feature of the ELO system is that the expected win probability $P_\text{exp}$ determined from iteratively updated ELO ratings $\mathcal{R}_\text{team}$ and $\mathcal{R}_\text{opp}$, converges on the \emph{true} win probability of the matchup when the competitors sample scores from independent random variables.
-In the limit of infinitely many games and infinitely small update factor $\kappa$, the ELO calculated win probability is the true win probability.
+A primary feature of the Elo system is that the expected win probability $P_\text{exp}$ determined from iteratively updated Elo ratings $\R_\text{team}$ and $\R_\text{opp}$, converges on the \emph{true} win probability of the matchup when the competitors sample scores from independent random variables.
+In the limit of infinitely many games and infinitely small update factor $\kappa$, the Elo calculated win probability is the true win probability.
 
-\section{Margin-of-victory}
+\section{Margin-of-victory Elo}
 
-The original ELO model was first applied to chess rankings where there is a winner and a loser but no score.
-It can be used effectively to predict the odds with which a player beats his opponent \eqref{win_prob}, and correspondingly---by calculating various outcomes---the odds with which a player advances through a tournament. 
+The original Elo model was first applied to chess rankings where there is a winner and a loser but no score.
+It can be used to predict the odds with which a player beats his opponent \eqref{win_prob}, and correspondingly---by calculating various outcomes---the odds with which a player advances through a tournament. 
 
 The model is easily extended to point based games by ignoring the margin-of-victory and only considering wins and losses.
-Notably, it has been used to forecast NFL and NBA team performance on the analytics and news platform \emph{fivethirtyeight} \footnote{for an extensive list of ELO use cases see \ref{?}}.
+One shortcoming of this approach is that it cannot predict the mean or median point spreads which are often used to set betting lines and which are interesting in their own right.
+Methods have been proposed to retain margin-of-victory information by allowing the parameter $\kappa$ in Eq.~\eqref{elo} to vary with the point spread.
+The idea is that if a team finds itself in a rating slump, subsequent dominant victories should raise the team's rating faster than successive close wins.
+The method appeared in football Elo ratings \cite{?} and was adapted to forecast NFL and NBA team performance on the analytics and news platform FiveThirtyEight \footnote{for an extensive list of Elo use cases see \ref{?}}.
 
-One shortcoming of the model is that it does not predict the expected or median point spreads which are often used to set betting lines.
-More generally, the task of predicting individual point outcomes (or some other quantity) using the ELO method is an interesting one itself.
+Spread-dependent $\kappa$-factors possess some desirable features, but they also introduce a number of problems.
+There is no obvious form for a margin-of-victory multiplier on $\kappa$, and introducing one still does not get you any closer to predicting the mean or median score of a game.
+There are also issues of autocorrelation, i.e.\ great teams should not be over rewarded for winning by large margins because that's what great teams do.
 
-We propose, for this purpose, a new method to extend ELO ratings and calculate the full probability distribution of allowable point spreads.
-The crux of the model is the insight that ELO ratings only require actors which compete to win games and that ``winning'' is a subjective criteria, typically defined as
+There is, alternatively, a more natural extension of Elo ratings which allows one to incorporate margin-of-victory information and predict the mean and median score of future games.
+We start by emphasizing that Elo ratings only require actors which compete to win games and that ``winning'' is a subjective definition itself.
+Let $p_s$ and $p_a$ denote points scored and points allowed respectively.
+The usual win criteria is defined as
 \begin{equation}
-  \text{win}: \text{points scored} - \text{points allowed} > 0.
+  \text{win}: p_s - p_a > 0.
 \end{equation}
-This is a fair or democratic win criteria as it gives each competitor a level playing field.
-Nevertheless, it is equally easy to define the win criteria as
-\begin{align}
-  \text{win}: \text{points scored} &- \text{points allowed} > 1, \\
-  \text{win}: \text{points scored} &- \text{points allowed} > 2, \\
-  \text{win}: \text{points scored} &- \text{points allowed} > n.
-\end{align}
+This is the fair or democratic criteria as it gives each competitor a level playing field.
+Just as easily, one could define winning as
+\begin{equation}
+  \text{win}: p_s - p_a > n,
+\end{equation}
+where $n \in [0, p_\text{max}]$ is a finite margin-of-victory line.
+This is equivalent to a normal Elo rating system where a point handicap is applied in favor of one team.
+
+To calculate the probability that a team beats an opponent by more than $n$ points, one need only calculate the Elo ratings of the team and their opponent under an $n$-point team handicap, i.e.\ according to the win criteria
+\begin{equation}
+  \text{win}: p_s - p_a - n > 0.
+\end{equation}
+The handicapping procedure splits team ratings into two different groups: a rating \emph{handicapped by} $n$ points, and a rating \emph{advantaged by} $n$ points.
+
+To get a better feel for what this does, imagine an average team under the classical Elo system which corresponds to a handicap $n=0$. 
+As we raise the handicap $n$, it becomes more difficult for the team to overcome their handicap and win games.
+The team's handicapped Elo rating will drop, and eventually will fall below even the worst non-handicapped team.
+Simultaneously, we must also keep track of the team's performance \emph{against} handicapped teams.
+Naturally, this will have an opposite effect on the team's rating and it will rise as their opponent's handicap increases.
+
+The handicapping procedure thus creates mirror copies of the team's rating at each value of the spread $\R_\text{team}^\text{hcap}(n)$ and $\R_\text{team}^\text{adv}(n)$.
+To predict the probability that the team will beat their opponent by more than $n$ points, we apply Eqn.~\eqref{win_prob} to their handicapped and advantaged Elo ratings
+\begin{equation}
+  P_\text{exp}(\R_\text{team}^\text{hcap}, \R_\text{opp}^\text{adv}; n) = \frac{1}{10^{-(\R_\text{team}^\text{hcap} - \R_\text{opp}^\text{adv})/\gamma} + 1}.
+\end{equation}
+
+The procedure can easily be applied for each integer value of $n$ up to some large number in order to calculate the margin-dependent Elo ratings for every reasonable margin-of-victory.
+Once this is done, the resulting ratings can be used to predict the probability of a team beating its opponent by any point number.
+The procedure simply constructs the point spread cumulative distribution function (CDF) for the team of interest
+\begin{equation}
+  \label{cdf}
+  F(n) = \sum_{s=n}^\infty P(s),
+\end{equation}
+where $s = p_s - p_a$.
+This is the full probability distribution of allowable point spreads and can be used to calculate both the mean and median values.
+
+\section{Deriving quantities from the spread distribution}
+
+\subsection{Median point spread}
+
+The median point spread is the value which gives both teams equal odds to cover.
+It's a popular betting statistic as it generally promotes equal numbers of bets on both sides of the line which increases betting volume and minimizes risk for the house.
+In the margin-dependent Elo model, we can easily estimate the median point spread by calculating the handicapped and advantaged ratings at each value of the spread, and by finding the spread where the win probability between the handicapped and advantaged teams is closest to 50\%.
+
+One should be reasonably concerned that the handicapped Elo ratings will be unreliable for large values of the spread as the handicapped team will seldom win.
+Indeed, there are large uncertainties in predicting a blowout; the statistics are simply insufficient to extrapolate from prior to future events.
+In contrast to these extreme spread values, the spread median is---by definition---the value where wins and losses occur with equal probability and hence events are maximally frequent to maintain rating equilibrium.
+One should expect that the median values to be relatively accurate up to the limitations of the model.
+
+\subsection{Mean point spread}
+
+Although the mean point spread is less commonly used in betting circles, it's nevertheless interesting to compute.
+The mean point spread can be obtained from the cumulative point spread distribution $F$ via integration by parts
+\begin{equation}
+  \label{parts}
+  \bar{s} = \sum\limits_{s_\text{min}}^{s_\text{max}} s P(s) = s_\text{max} - \sum\limits_{s_\text{min}}^{s_\text{max}} F(s),
+\end{equation}
+where the boundary term in Eqn.~\ref{parts} simplifies since the CDF takes on values $F(s_\text{max})=0$ and $F(s_\text{min})=1$.
+
+\section{Point total}
+
+In addition to the point spread $s = p_s - p_a$, it's also possible to predict the distribution of \emph{total} points scored $t = p_s + p_a$.
+The point total and point spread values represent symmetric and asymmetric components of the teams' point distributions. 
+We proceed analogously to the previous point spread case and calculate the handicapped and advantaged Elo ratings at each value of the allowable point total. 
+The Elo win criteria takes the modified form,
+\begin{equation}
+  \text{win}: p_s + p_a - m > 0
+\end{equation}
+where the point total handicap takes values $m \in [0, t_\text{max}]$.
+
+The handicapping procedure splits each team's ratings into two mirror copies as before: one rating where points contribute to the spread with positive weight and one where they contribute with negative weight. 
+When two teams rack up a large number of combined points, the team associated with the positive points (we use the home team) wins the game and increases its Elo rating and the team associated with the negative points loses the game and decreases it's rating.
 \end{document}
