@@ -101,7 +101,7 @@ Just as easily, one could define winning as
 \begin{equation}
   \text{win}: p_s - p_a > n,
 \end{equation}
-where $n \in [0, p_\text{max}]$ is a finite margin-of-victory line.
+where $n \in [p_\text{min}, p_\text{max}]$ is a finite margin-of-victory line.
 This is equivalent to a normal Elo rating system where a point handicap is applied in favor of one team.
 
 To calculate the probability that a team beats an opponent by more than $n$ points, one need only calculate the Elo ratings of the team and their opponent under an $n$-point team handicap, i.e.\ according to the win criteria
@@ -111,19 +111,19 @@ To calculate the probability that a team beats an opponent by more than $n$ poin
 The handicapping procedure splits team ratings into two different groups: a rating \emph{handicapped by} $n$ points, and a rating \emph{advantaged by} $n$ points.
 
 To get a better feel for what this does, imagine an average team under the classical Elo system which corresponds to a handicap $n=0$. 
-As we raise the handicap $n$, it becomes more difficult for the team to overcome their handicap and win games.
+As we apply a handicap $n$ to the home team, it becomes increasingly difficult for the team to overcome their handicap and win games.
 The team's handicapped Elo rating will drop, and eventually will fall below even the worst non-handicapped team.
-Simultaneously, we must also keep track of the team's performance \emph{against} handicapped teams.
-Naturally, this will have an opposite effect on the team's rating and it will rise as their opponent's handicap increases.
+Simultaneously, we must also keep track of each team's performance \emph{against} handicapped teams, i.e.\ for $n \rightarrow -n$.
+Naturally, this will have an opposite effect, and each team's advantaged rating will rise as their handicap goes more negative.
 
-The handicapping procedure thus creates mirror copies of the team's rating at each value of the spread $\R_\text{team}^\text{hcap}(n)$ and $\R_\text{team}^\text{adv}(n)$.
+The procedure thus creates mirror copies of the team's rating at each value of the spread, the handicapped rating $\R_\text{team}(n)$ and advantaged rating $\R_\text{team}(-n)$.
 To predict the probability that the team will beat their opponent by more than $n$ points, we apply Eqn.~\eqref{win_prob} to their handicapped and advantaged Elo ratings
 \begin{equation}
-  P_\text{exp}(\R_\text{team}^\text{hcap}, \R_\text{opp}^\text{adv}; n) = \frac{1}{10^{-(\R_\text{team}^\text{hcap} - \R_\text{opp}^\text{adv})/\gamma} + 1}.
+  P_\text{exp}(\R_\text{team}(n), \R_\text{opp}(-n)) = \frac{1}{10^{-(\R_\text{team} - \R_\text{opp})/\gamma} + 1}.
 \end{equation}
 
 The procedure can easily be applied for each integer value of $n$ up to some large number in order to calculate the margin-dependent Elo ratings for every reasonable margin-of-victory.
-Once this is done, the resulting ratings can be used to predict the probability of a team beating its opponent by any point number.
+Once done, the resulting ratings can be used to predict the probability that a team beats its opponent by any point number.
 The procedure simply constructs the point spread cumulative distribution function (CDF) for the team of interest
 \begin{equation}
   \label{cdf}
@@ -132,13 +132,17 @@ The procedure simply constructs the point spread cumulative distribution functio
 where $s = p_s - p_a$.
 This is the full probability distribution of allowable point spreads and can be used to calculate both the mean and median values.
 
-\section{Deriving quantities from the spread distribution}
+\section{Descriptive Statistics}
 
 \subsection{Median point spread}
 
 The median point spread is the value which gives both teams equal odds to cover.
 It's a popular betting statistic as it generally promotes equal numbers of bets on both sides of the line which increases betting volume and minimizes risk for the house.
 In the margin-dependent Elo model, we can easily estimate the median point spread by calculating the handicapped and advantaged ratings at each value of the spread, and by finding the spread where the win probability between the handicapped and advantaged teams is closest to 50\%.
+This is equivalent to the point spread $\tilde{s}$ such that
+\begin{equation}
+  \R_\text{team}(n) \approx \R_\text{opp}(-n).
+\end{equation}
 
 One should be reasonably concerned that the handicapped Elo ratings will be unreliable for large values of the spread as the handicapped team will seldom win.
 Indeed, there are large uncertainties in predicting a blowout; the statistics are simply insufficient to extrapolate from prior to future events.
@@ -155,17 +159,28 @@ The mean point spread can be obtained from the cumulative point spread distribut
 \end{equation}
 where the boundary term in Eqn.~\ref{parts} simplifies since the CDF takes on values $F(s_\text{max})=0$ and $F(s_\text{min})=1$.
 
-\section{Point total}
+The mean and median are, in general, equal only for symmetric distributions and may differ significantly in lopsided matchups where Elo differences are large.
+Such differences are particularly informative when predicting spread outcomes away from the median expectation value, e.g. when predicting a blowout. 
+
+\section{Orthogonal point combinations}
 
 In addition to the point spread $s = p_s - p_a$, it's also possible to predict the distribution of \emph{total} points scored $t = p_s + p_a$.
-The point total and point spread values represent symmetric and asymmetric components of the teams' point distributions. 
-We proceed analogously to the previous point spread case and calculate the handicapped and advantaged Elo ratings at each value of the allowable point total. 
-The Elo win criteria takes the modified form,
+The point total and point spread values represent symmetric and asymmetric components of the two teams' point distributions and form an orthogonal basis for the joint distribution $P(p_s, p_a)$. 
+
+The point total ratings are constructed analogously to the aforementioned point spread ratings, and the Elo win criteria takes a modified form
 \begin{equation}
-  \text{win}: p_s + p_a - m > 0
+  \label{win_total}
+  \text{win}: p_s + p_a - m > 0,
 \end{equation}
 where the point total handicap takes values $m \in [0, t_\text{max}]$.
+This is equivalent to the margin-dependent spread condition, except that we've flipped the sign of the opponent's point total.
+In doing so, the spread difference turns into a sum, and a team wins their game if its score exceeds its opponents \emph{negative} score by a finite margin of victory, i.e.\ if the point total of both teams exceeds a given threshold.
 
-The handicapping procedure splits each team's ratings into two mirror copies as before: one rating where points contribute to the spread with positive weight and one where they contribute with negative weight. 
-When two teams rack up a large number of combined points, the team associated with the positive points (we use the home team) wins the game and increases its Elo rating and the team associated with the negative points loses the game and decreases it's rating.
+The procedure consequently splits each team's rating into two mirror copies as before: one rating where the team is handicapped by $m$ points and one where it is advantaged by $m$ points, i.e.\ $m \rightarrow -m$, which we label $\mathcal{R}(m)$ and $\mathcal{R}(-m)$ respectively.
+When two teams rack up a large number of combined points, the handicapped team who's points contribute with positive weight ``wins'' the game and increases its rating $\mathcal{R}(m)$ while the team with the sign flipped points ``loses'' the game and decreases it's mirrored rating $\mathcal{R}(-m)$.
+This decreases the gap between the two mirrored Elo ratings, and hence increases the probability that either team will cover the same point total in future matchups.
+
+Elo differences are always taken between the mirrored pairs $\mathcal{R}(m)$ and $\mathcal{R}(-m)$ when predicting event probabilities such that only one sign flip enters equation \eqref{win_total}. 
+Naturally, the sign flip and handicapping procedure is applied to both teams in turn such that every team carries both copies of the mirrored ratings. 
+
 \end{document}
