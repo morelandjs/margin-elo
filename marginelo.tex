@@ -22,7 +22,7 @@
 \begin{abstract}
   The Elo rating system is a highly successful ranking algorithm for games of skill where, by construction, one team wins and the other loses.
   A primary limitation of present implementations of the Elo algorithm is the ability to predict information beyond a match's win-loss probability.
-  For example, in the traditional Elo system the victor is awarded the same point bounty if he beats a team by 1 point or 10 points; only the relative rating of his opponent affects the match bounty.
+  For example, in the traditional Elo system the victor is awarded the same point bounty if he beats a team by 1 point or 10 points; only the rating difference of his opponent affects the match bounty.
 
 Previous efforts to extend the Elo system to incorporate margin-of-victory information have relied on adhoc assumptions which do not converge on the true margin dependent win probability in the relevant limits.
   In this work, we explain that Elo ratings and predictions can be naturally extended to include margin-of-victory information by simply redefining ``what it means to win''.
@@ -31,9 +31,6 @@ Previous efforts to extend the Elo system to incorporate margin-of-victory infor
 
 
 \maketitle
-
-\section{Introduction}
-
 
 \section{Elo rating system}
 
@@ -106,14 +103,14 @@ Just as easily, one could define winning as
 \begin{equation}
   \text{win}: p_s - p_a > n,
 \end{equation}
-where $n \in [p_\text{min}, p_\text{max}]$ is a finite margin-of-victory line.
+where $n$ is a finite margin-of-victory line.
 This is equivalent to a normal Elo rating system where a point handicap is applied in favor of one team.
 
 To calculate the probability that a team beats an opponent by more than $n$ points, one need only calculate the Elo ratings of the team and their opponent under an $n$-point team handicap, i.e.\ according to the win criteria
 \begin{equation}
   \text{win}: p_s - p_a - n > 0.
 \end{equation}
-The handicapping procedure splits team ratings into two different groups: a rating \emph{handicapped by} $n$ points, and a rating \emph{advantaged by} $n$ points.
+The handicapping procedure splits team ratings into two different groups: a rating handicapped by $n$ points, and a rating advantaged by $n$ points.
 
 To get a better feel for what this does, imagine an average team under the classical Elo system which corresponds to a handicap $n=0$. 
 As we apply a handicap $n$ to the home team, it becomes increasingly difficult for the team to overcome their handicap and win games.
@@ -166,7 +163,7 @@ This is equivalent to the point spread $\tilde{s}$ such that
 \end{equation}
 
 One should be reasonably concerned that the handicapped Elo ratings will be unreliable for large values of the spread as the handicapped team will seldom win.
-Indeed, there are large uncertainties in predicting a blowout; the statistics are simply insufficient to extrapolate from prior to future events.
+Indeed, there are large uncertainties in predicting a blowout as the statistics are simply insufficient to extrapolate from prior to future events.
 In contrast to these extreme spread values, the spread median is---by definition---the value where wins and losses occur with equal probability and hence events are maximally frequent to maintain rating equilibrium.
 One should expect that the median values to be relatively accurate up to the limitations of the model.
 
@@ -178,7 +175,7 @@ The mean point spread can be obtained from the cumulative point spread distribut
   \label{parts}
   \bar{s} = \sum\limits_{s_\text{min}}^{s_\text{max}} s P(s) = s_\text{max} - \sum\limits_{s_\text{min}}^{s_\text{max}} F(s),
 \end{equation}
-where the boundary term in Eqn.~\ref{parts} simplifies since the CDF takes on values $F(s_\text{max})=0$ and $F(s_\text{min})=1$.
+where the boundary term in Eqn.~\ref{parts} simplifies since the CDF converges to $F(s_\text{max})=0$ and $F(s_\text{min})=1$ at the extrema.
 
 The mean and median are, in general, equal only for symmetric distributions and may differ significantly in lopsided matchups where Elo differences are large.
 Such differences are particularly informative when predicting spread outcomes away from the median expectation value, e.g. when predicting a blowout. 
@@ -188,21 +185,33 @@ Such differences are particularly informative when predicting spread outcomes aw
 In addition to the point spread $s = p_s - p_a$, it's also possible to predict the distribution of \emph{total} points scored $t = p_s + p_a$.
 The point total and point spread values represent symmetric and asymmetric components of the two teams' point distributions and form an orthogonal basis for the joint distribution $P(p_s, p_a)$. 
 
-The point total ratings are constructed analogously to the aforementioned point spread ratings, and the Elo win criteria takes a modified form
+Point total ratings can be constructed in an analogous fashion to the aforementioned point spread ratings, and the Elo win criteria takes a modified form
 \begin{equation}
   \label{win_total}
   \text{win}: p_s + p_a - m > 0,
 \end{equation}
-where the point total handicap takes values $m \in [0, t_\text{max}]$.
-This is equivalent to the margin-dependent spread condition, except that we've flipped the sign of the opponent's point total.
-In doing so, the spread difference turns into a sum, and a team wins their game if its score exceeds its opponents \emph{negative} score by a finite margin of victory, i.e.\ if the point total of both teams exceeds a given threshold.
+where $m$ applies a handicap to the point total $t$.
+This is equivalent to the margin-dependent spread condition, except that we've flipped the sign of the opponent's points.
+In doing so, the spread difference turns into a sum, and a team wins their game if its score exceeds its opponent's \emph{negated} score by a finite margin of victory, i.e.\ if the point total of both teams exceeds a given threshold.
 
-The procedure consequently splits each team's rating into two mirror copies as before: one rating where the team is handicapped by $m$ points and one where it is advantaged by $m$ points, i.e.\ $m \rightarrow -m$, which we label $\mathcal{R}(m)$ and $\mathcal{R}(-m)$ respectively.
-When two teams rack up a large number of combined points, the handicapped team who's points contribute with positive weight ``wins'' the game and increases its rating $\mathcal{R}(m)$ while the team with the sign flipped points ``loses'' the game and decreases it's mirrored rating $\mathcal{R}(-m)$.
+The procedure consequently splits each team's rating into two mirror copies as before: one rating where the team is handicapped by $m$ points and one where it is advantaged by $m$ points, i.e.\ $m \rightarrow -m$, which we label $\mathcal{R}_\text{team}(m)$ and $\mathcal{R}_\text{team}(-m)$ respectively as before.
+When two teams rack up a large number of combined points, the handicapped team who's points contribute with positive weight ``wins'' the game and increases its rating while the advantaged team with the sign flipped points ``loses'' the game and decreases it's mirrored rating.
 This decreases the gap between the two mirrored Elo ratings, and hence increases the probability that either team will cover the same point total in future matchups.
 
-Elo differences are always taken between the mirrored pairs $\mathcal{R}(m)$ and $\mathcal{R}(-m)$ when predicting event probabilities such that only one sign flip enters equation \eqref{win_total}. 
+Elo differences are always taken between the mirrored rating pairs when predicting event probabilities such that only one sign flip enters equation \eqref{win_total}. 
 Naturally, the sign flip and handicapping procedure is applied to both teams in turn such that every team carries both copies of the mirrored ratings. 
+
+Once the point spread and point total distributions are constructed for a given game, one can predict interesting quantities such as the number of points a team will score (or allow) by taking sums and differences of the point spread and point total expectation values
+\begin{align}
+  \label{combinations}
+  \bar{p}_s &= \tfrac{1}{2}(\bar{s} + \bar{t}), \\
+  \bar{p}_a &= \tfrac{1}{2}(\bar{s} - \bar{t}).
+\end{align}
+
+In this fashion we can project offensive and defensive performances, although we caution that there is no guarantee that the linear combinations in Eqn.~\eqref{combinations} will remain positive definite which is of course required for a physical point projection.
+
+
+\section{Concluding remarks}
 
 \psec{Acknowledgements}
 
