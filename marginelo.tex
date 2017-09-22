@@ -5,6 +5,7 @@
 \graphicspath{{fig/}}
 
 \newcommand{\R}{\mathcal{R}}
+\newcommand{\psec}[1]{\phantomsection\addcontentsline{toc}{section}{#1}}
 
 \begin{document}
 
@@ -73,6 +74,10 @@ A common convention is to fix $\gamma=400$ such that a 400 point rating advantag
 
 A primary feature of the Elo system is that the expected win probability $P_\text{exp}$ determined from iteratively updated Elo ratings $\R_\text{team}$ and $\R_\text{opp}$, converges on the \emph{true} win probability of the matchup when the competitors sample scores from independent random variables.
 In the limit of infinitely many games and infinitely small update factor $\kappa$, the Elo calculated win probability is the true win probability.
+\begin{figure}
+  \includegraphics{win_rate}
+  \caption{Time series win rate for a toy model with different handicaps (listed on the right) applied to the stronger team. The black horizontal dashed lines are the true win rate of the sampled distribution under the imposed handicap and the blue solid line is the reconstructed (predicted) win rate determined by updating handicapped and advantaged Elo ratings for each team and applying Eqn.~\eqref{win_prob_hcap}. This particular toy model is a distribution of scores sampled from the difference of two Poisson random variables. The stronger team has a mean score of $16$ and the weaker team a mean of $10$. Notice that the win rate is $\sim\!50\%$ when the handicap equals $6$ points. Actually, to be exact it is slightly below 50\% as the chosen win criteria requires that a team win by \emph{more} than 0.}
+\end{figure}
 
 \section{Margin-of-victory Elo}
 
@@ -119,6 +124,7 @@ Naturally, this will have an opposite effect, and each team's advantaged rating 
 The procedure thus creates mirror copies of the team's rating at each value of the spread, the handicapped rating $\R_\text{team}(n)$ and advantaged rating $\R_\text{team}(-n)$.
 To predict the probability that the team will beat their opponent by more than $n$ points, we apply Eqn.~\eqref{win_prob} to their handicapped and advantaged Elo ratings
 \begin{equation}
+  \label{win_prob_hcap}
   P_\text{exp}(\R_\text{team}(n), \R_\text{opp}(-n)) = \frac{1}{10^{-(\R_\text{team} - \R_\text{opp})/\gamma} + 1}.
 \end{equation}
 
@@ -131,6 +137,21 @@ The procedure simply constructs the point spread cumulative distribution functio
 \end{equation}
 where $s = p_s - p_a$.
 This is the full probability distribution of allowable point spreads and can be used to calculate both the mean and median values.
+
+\begin{figure*}
+  \includegraphics{team_history}
+  \caption{Handicapped NFL team Elo ratings 2009--present. Colored lines denote different handicaps. Dark blue denotes a handicap of 0 points and dark red a handicap of 40 points. Intermediate colors are constant handicap increments of 5 points. Ratings for Rams and Chargers persist through relocation. Not shown: advantaged ratings which mirror handicapped ratings.}
+\end{figure*}
+
+\begin{figure}
+  \includegraphics{example_distribution}
+  \caption{Example cumulative probability distribution function (CDF) of point spreads calculated for a specific matchup from the margin-dependent Elo model. Note that the function is not strictly monotonic due to fluctuations in the decoupled Elo ratings at each value of the spread.}
+\end{figure}
+
+\begin{figure*}
+  \includegraphics{paper_spreads}
+  \caption{NFL score predictions determined from the margin-dependent Elo model for the second week of the 2017 season. Orange dashes are the prediction medians, boxes are the 25--75\% inner-quartile range, and whiskers cover 90\% of the distribution tails. Home field advantage was accounted for by handicapping the away team 60 Elo points.}
+\end{figure*}
 
 \section{Descriptive Statistics}
 
@@ -182,5 +203,11 @@ This decreases the gap between the two mirrored Elo ratings, and hence increases
 
 Elo differences are always taken between the mirrored pairs $\mathcal{R}(m)$ and $\mathcal{R}(-m)$ when predicting event probabilities such that only one sign flip enters equation \eqref{win_total}. 
 Naturally, the sign flip and handicapping procedure is applied to both teams in turn such that every team carries both copies of the mirrored ratings. 
+
+\psec{Acknowledgements}
+
+\medskip
+The authors gratefully acknowledge use of the \href{https://github.com/BurntSushi/nfldb}{nfldb} Python package by Andrew Gallant which was used to acquire NFL game data.
+
 
 \end{document}
