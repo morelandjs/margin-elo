@@ -20,13 +20,12 @@
 
 
 \begin{abstract}
-  The Elo rating system is a highly successful ranking algorithm for games of skill where, by construction, one team wins and the other loses.
-  A primary limitation of present implementations of the Elo algorithm is the ability to predict information beyond a match's win-loss probability.
-  For example, in the traditional Elo system the victor is awarded the same point bounty if he beats a team by 1 point or 10 points; only the rating difference of his opponent affects the match bounty.
-
+The Elo rating system is a highly successful ranking algorithm for games of skill where, by construction, one team wins and the other loses.
+A primary limitation of present implementations of the Elo algorithm is the ability to predict information beyond a match's win-loss probability.
+For example, in the traditional Elo system the victor is awarded the same point bounty if he beats a team by 1 point or 10 points; only the rating difference between the team and its opponent affects the match bounty.
 Previous efforts to extend the Elo system to incorporate margin-of-victory information have relied on adhoc assumptions which do not converge on the true margin dependent win probability in the relevant limits.
-  In this work, we explain that Elo ratings and predictions can be naturally extended to include margin-of-victory information by simply redefining ``what it means to win''.
-  We create ratings for each value of the margin-of-victory and use these ratings to predict the \emph{full} distribution of point spread outcomes for matches which have not yet been played.
+In this work, we explain that Elo ratings and predictions can be naturally extended to include margin-of-victory information by simply redefining ``what it means to win''.
+We create ratings for each value of the margin-of-victory and use these ratings to predict the \emph{full} distribution of point spread outcomes for matches which have not yet been played.
 \end{abstract}
 
 
@@ -35,18 +34,17 @@ Previous efforts to extend the Elo system to incorporate margin-of-victory infor
 \section{Elo rating system}
 
 The Elo system ascribes a power ranking index $\R$ to each competitor (player or team) which can be used to predict the outcome of a future matchup.
-Players with a higher rating are viewed as more likely to win their matchup, and players with a lower rating are more likely to lose.
-The process is fundamentally Bayesian and rating values before and after the match reflect prior and posterior knowledge of each player's performance.
+Teams with a higher rating are viewed as more likely to win their matchup, and teams with a lower rating are more likely to lose.
+The process is fundamentally Bayesian and rating values before and after the match reflect prior and posterior knowledge of each team's performance.
 
-The convention is to initialize all player ratings at ${\R_0 = 1500}$, although this choice is arbitrary.
-As we show momentarily, only the rating difference between two players matters, and hence the Elo rating can be initialized with any starting value.
-
+The convention is to initialize all team ratings at ${\R_0 = 1500}$, although this choice is arbitrary.
+As we show momentarily, only the rating difference between two teams matters, and hence the Elo rating can be initialized with any starting value.
 The ratings of the competitors are then updated iteratively after each matchup.
-Players gain or lose points based on the outcome of the match and the rating difference between the two competitors.
+Teams gain or lose points based on the outcome of the match and the rating difference between the two competitors.
 One is awarded more points for beating a stronger opponent and less points for beating a weaker opponent.
 The points awarded to the victor are deducted from the loser such that the total number of points in the system is always conserved.
 
-More specifically, the victor bounty scales with the degree to which a player exceeds (or falls short of) their expected match performance.
+More specifically, the victor bounty scales with the degree to which a team exceeds (or falls short of) their expected match performance.
 Let $P_\text{exp}$ denote the expected probability that a team beats their opponent at a neutral venue.
 The bounties that the team and their opponent receive from the outcome of the match are given by,
 \begin{align}
@@ -70,10 +68,17 @@ Much like the starting Elo, the parameter $\gamma$ can take any value and only t
 A common convention is to fix $\gamma=400$ such that a 400 point rating advantage corresponds to a 90\% average win rate.
 
 A primary feature of the Elo system is that the expected win probability $P_\text{exp}$ determined from iteratively updated Elo ratings $\R_\text{team}$ and $\R_\text{opp}$, converges on the \emph{true} win probability of the matchup when the competitors sample scores from independent random variables.
-In the limit of infinitely many games and infinitely small update factor $\kappa$, the Elo calculated win probability is the true win probability.
+In the limit of infinitely many games and infinitely small update factor $\kappa$, the Elo calculated win probability \emph{is} the true win probability.
+
+We demonstrate this convergence property of the Elo algorithm by simulating a series of games between two different teams using a simple a toy model.
+The teams are represented by a Poisson distribution with two different means, one with mean $\mu=16$ and the other with mean $\mu=10$.
+We sampled a pair of scores for each game, determine a winner, and update each team's Elo ratings accordingly.
+Figure~\ref{fig:win_rate} compares the spread distribution's true win rate (black line), to the win rate calculated from Eqn.~\eqref{win_prob} (blue line).
+The two quantities agree within statistical fluctuations, as the Elo ratings naturally trend toward equilibrium.
+For instance, if one Elo rating becomes artificially inflated by a series of statistically anomalous wins, it is heavily penalized by any subsequent losses and trends back toward its equilibrium value.
 \begin{figure}
   \includegraphics{win_rate}
-  \caption{Time series win rate for a toy model with different handicaps (listed on the right) applied to the stronger team. The black horizontal dashed lines are the true win rate of the sampled distribution under the imposed handicap and the blue solid line is the reconstructed (predicted) win rate determined by updating handicapped and advantaged Elo ratings for each team and applying Eqn.~\eqref{win_prob_hcap}. This particular toy model is a distribution of scores sampled from the difference of two Poisson random variables. The stronger team has a mean score of $16$ and the weaker team a mean of $10$. Notice that the win rate is $\sim\!50\%$ when the handicap equals $6$ points. Actually, to be exact it is slightly below 50\% as the chosen win criteria requires that a team win by \emph{more} than 0.}
+  \caption{\label{fig:win_rate} Time series win rate for a toy model with different handicaps (listed on the right) applied to the stronger team. The black horizontal dashed lines are the true win rate of the sampled distribution under the imposed handicap and the blue solid line is the reconstructed (predicted) win rate determined by updating handicapped and advantaged Elo ratings for each team and applying Eqn.~\eqref{win_prob_hcap}. This particular toy model is a distribution of scores sampled from the difference of two Poisson random variables. The stronger team has a mean score of $16$ and the weaker team a mean of $10$. Notice that the win rate is $\sim\!50\%$ when the handicap equals $6$ points. Actually, to be exact it is slightly below 50\% as the chosen win criteria requires that a team win by \emph{more} than 0.}
 \end{figure}
 
 \section{Margin-of-victory Elo}
@@ -118,8 +123,8 @@ The team's handicapped Elo rating will drop, and eventually will fall below even
 Simultaneously, we must also keep track of each team's performance \emph{against} handicapped teams, i.e.\ for $n \rightarrow -n$.
 Naturally, this will have an opposite effect, and each team's advantaged rating will rise as their handicap goes more negative.
 
-The procedure thus creates mirror copies of the team's rating at each value of the spread, the handicapped rating $\R_\text{team}(n)$ and advantaged rating $\R_\text{team}(-n)$.
-To predict the probability that the team will beat their opponent by more than $n$ points, we apply Eqn.~\eqref{win_prob} to their handicapped and advantaged Elo ratings
+The procedure thus creates mirror copies of each team's rating at each value of the spread: the handicapped rating $\R_\text{team}(n)$, and advantaged rating $\R_\text{team}(-n)$.
+To predict the probability that a team will beat their opponent by more than $n$ points, we apply Eqn.~\eqref{win_prob} to their handicapped and advantaged Elo ratings
 \begin{equation}
   \label{win_prob_hcap}
   P_\text{exp}(\R_\text{team}(n), \R_\text{opp}(-n)) = \frac{1}{10^{-(\R_\text{team} - \R_\text{opp})/\gamma} + 1}.
@@ -133,7 +138,7 @@ The procedure simply constructs the point spread cumulative distribution functio
   F(n) = \sum_{s=n}^\infty P(s),
 \end{equation}
 where $s = p_s - p_a$.
-This is the full probability distribution of allowable point spreads and can be used to calculate both the mean and median values.
+This is the full probability distribution of allowable point spreads and can be used to calculate both the mean and median point values.
 
 \begin{figure*}
   \includegraphics{team_history}
@@ -146,7 +151,7 @@ This is the full probability distribution of allowable point spreads and can be 
 \end{figure}
 
 \begin{figure*}
-  \includegraphics{paper_spreads}
+  \includegraphics{predict}
   \caption{NFL score predictions determined from the margin-dependent Elo model for the second week of the 2017 season. Orange dashes are the prediction medians, boxes are the 25--75\% inner-quartile range, and whiskers cover 90\% of the distribution tails. Home field advantage was accounted for by handicapping the away team 60 Elo points.}
 \end{figure*}
 
@@ -165,7 +170,7 @@ This is equivalent to the point spread $\tilde{s}$ such that
 One should be reasonably concerned that the handicapped Elo ratings will be unreliable for large values of the spread as the handicapped team will seldom win.
 Indeed, there are large uncertainties in predicting a blowout as the statistics are simply insufficient to extrapolate from prior to future events.
 In contrast to these extreme spread values, the spread median is---by definition---the value where wins and losses occur with equal probability and hence events are maximally frequent to maintain rating equilibrium.
-One should expect that the median values to be relatively accurate up to the limitations of the model.
+One should expect the median values to be relatively accurate within the limitations of the model.
 
 \subsection{Mean point spread}
 
@@ -175,10 +180,10 @@ The mean point spread can be obtained from the cumulative point spread distribut
   \label{parts}
   \bar{s} = \sum\limits_{s_\text{min}}^{s_\text{max}} s P(s) = s_\text{max} - \sum\limits_{s_\text{min}}^{s_\text{max}} F(s),
 \end{equation}
-where the boundary term in Eqn.~\ref{parts} simplifies since the CDF converges to $F(s_\text{max})=0$ and $F(s_\text{min})=1$ at the extrema.
+where the boundary term in Eqn.~\ref{parts} simplifies since the CDF converges to $F(s_\text{max})=0$ and $F(s_\text{min})=1$ at the point spread extrema.
 
 The mean and median are, in general, equal only for symmetric distributions and may differ significantly in lopsided matchups where Elo differences are large.
-Such differences are particularly informative when predicting spread outcomes away from the median expectation value, e.g. when predicting a blowout. 
+Such differences are particularly informative when predicting spread outcomes away from the median expectation value, e.g.\ when predicting a blowout. 
 
 \section{Orthogonal point combinations}
 
@@ -208,7 +213,21 @@ Once the point spread and point total distributions are constructed for a given 
   \bar{p}_a &= \tfrac{1}{2}(\bar{s} - \bar{t}).
 \end{align}
 
-In this fashion we can project offensive and defensive performances, although we caution that there is no guarantee that the linear combinations in Eqn.~\eqref{combinations} will remain positive definite which is of course required for a physical point projection.
+In this fashion we can predict offensive and defensive performances, although we caution that there is no guarantee that the linear combinations in Eqn.~\eqref{combinations} will remain positive definite which is of course required for a physical point projection.
+
+\section{Home field/court advantage}
+
+\begin{figure}
+  \includegraphics{home_field}
+\end{figure}
+
+\begin{figure}
+  \includegraphics{mean_abs_error}
+\end{figure}
+
+\section{Applying the model to the NFL}
+
+In this section we apply the aforementioned margin-dependent Elo rating system to the NFL using game data from 2009--present.
 
 
 \section{Concluding remarks}
