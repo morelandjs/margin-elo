@@ -43,12 +43,12 @@ We create ratings for each value of the margin-of-victory and use these ratings 
 
 \section{Elo rating system}
 
-The Elo system ascribes a power ranking index $\R$ to each competitor (player or team) which can be used to predict the outcome of a future matchup.
+The Elo system ascribes a power ranking index $\R$ to each competitor (player or team) which can be used to predict the outcome of a future matchup \cite{elo1978rating}.
 Teams with a higher rating are viewed as more likely to win their matchup, and teams with a lower rating are more likely to lose.
 The process is fundamentally Bayesian and rating values before and after the match reflect prior and posterior knowledge of each team's performance.
 
 The convention is to initialize all team ratings at ${\R_0 = 1500}$, although this choice is arbitrary.
-As we show momentarily, only the rating difference between two teams matters, and hence the Elo rating can be initialized with any starting value.
+As we show momentarily, only the rating difference between two teams matters, and hence the Elo ratings can be initialized with any starting value.
 The ratings of the competitors are then updated iteratively after each matchup.
 Teams gain or lose points based on the outcome of the match and the rating difference between the two competitors.
 One is awarded more points for beating a stronger opponent and less points for beating a weaker opponent.
@@ -83,9 +83,14 @@ In the limit of infinitely many games and infinitely small update factor $\kappa
 We demonstrate this convergence property of the Elo algorithm by simulating a series of games between two different teams using a simple a toy model.
 The teams are represented by a Poisson distribution with two different means, one with mean $\mu=16$ and the other with mean $\mu=10$.
 We sampled a pair of scores for each game, determine a winner, and update each team's Elo ratings accordingly.
-Figure~\ref{fig:win_rate} compares the spread distribution's true win rate (black line), to the win rate calculated from Eqn.~\eqref{win_prob} (blue line).
+Figure~\ref{fig:win_rate} compares the spread distribution's true win rate (top black line), to the win rate calculated from Eqn.~\eqref{win_prob} (top blue line).
 The two quantities agree within statistical fluctuations, as the Elo ratings naturally trend toward equilibrium.
 For instance, if one Elo rating becomes artificially inflated by a series of statistically anomalous wins, it is heavily penalized by any subsequent losses and trends back toward its equilibrium value.
+
+Below these two lines, we also show the distribution's true and Elo projected win probabilities when a $n$-point handicap is applied to the stronger team.
+Figure~\ref{fig:win_rate} shows that as the handicap $n \in [0, 3, ..., 12]$ points increases, the probability that the stronger team overcomes the handicap to win by that margin of victory decreases, and hence their handicapped win rate falls.
+This procedure, which we describe at length in the following section, alludes to the fundamental premise of this work---that Elo ratings can be extended to predict more than mere win-loss probabilities.
+They can also be used to predict the probability that teams cover any finite margin-of-victory line.
 \begin{figure}
   \includegraphics{win_rate}
   \caption{\label{fig:win_rate} Time series win rate for a toy model with different handicaps (listed on the right) applied to the stronger team. The black horizontal dashed lines are the true win rate of the sampled distribution under the imposed handicap and the blue solid line is the reconstructed (predicted) win rate determined by updating handicapped and advantaged Elo ratings for each team and applying Eqn.~\eqref{win_prob_hcap}. This particular toy model is a distribution of scores sampled from the difference of two Poisson random variables. The stronger team has a mean score of $16$ and the weaker team a mean of $10$. Notice that the win rate is $\sim\!50\%$ when the handicap equals $6$ points. Actually, to be exact it is slightly below 50\% as the chosen win criteria requires that a team win by \emph{more} than 0.}
@@ -98,23 +103,17 @@ It can be used to predict the odds with which a player beats his opponent \eqref
 
 The model is easily extended to point based games by ignoring the margin-of-victory and only considering wins and losses.
 One shortcoming of this approach is that it cannot predict the mean or median point spreads which are often used to set betting lines and which are interesting in their own right.
-Methods have been proposed to retain margin-of-victory information by allowing the parameter $\kappa$ in Eq.~\eqref{elo} to vary with the point spread.
+Methods have been proposed to retain margin-of-victory information by allowing the parameter $\kappa$ in Eqn.~\eqref{elo} to vary with the point spread.
 The idea is that if a team finds itself in a rating slump, subsequent dominant victories should raise the team's rating faster than successive close wins.
-The method appeared in football Elo ratings \cite{?} and was adapted to forecast NFL and NBA team performance on the analytics and news platform FiveThirtyEight \footnote{for an extensive list of Elo use cases see \ref{?}}.
+The method appeared in world football Elo ratings \cite{footballratings} and was adapted to forecast NFL and NBA team performance on the analytics and news platform \href{www.fivethirtyeight.com}{FiveThirtyEight} \cite{538NFL, 538NBA}.
 
 Spread-dependent $\kappa$-factors possess some desirable features, but they also introduce a number of problems.
 There is no obvious form for a margin-of-victory multiplier on $\kappa$, and introducing one still does not get one any closer to predicting the mean or median score of a game.
-There are also issues of autocorrelation, i.e.\ great teams should not be over rewarded for winning by large margins because that's what great teams do.
-
-\begin{figure}[b]
-  \includegraphics{example_distribution}
-  \label{fig:example}
-  \caption{Example cumulative probability distribution function (CDF) of point spreads calculated for a specific matchup from the margin-dependent Elo model. Note that the function is not strictly monotonic due to fluctuations in the decoupled Elo ratings at each value of the spread.}
-\end{figure}
+There are also issues of autocorrelation, i.e.\ great teams should not be over rewarded for winning by large margins because that's what great teams do \cite{538NFL}.
 
 There is, alternatively, a more natural extension of Elo ratings which allows one to incorporate margin-of-victory information and predict the mean and median score of future games.
-We start by emphasizing that Elo ratings only require actors which compete to win games and that ``winning'' is a subjective definition itself.
-Let $p_s$ and $p_a$ denote points scored and points allowed by a team of interest respectively.
+We start by emphasizing that Elo ratings only require agents which compete to win games and that ``winning'' is a subjective definition itself.
+Let $p_s$ and $p_a$ denote the points scored and points allowed by each team respectively.
 The usual win criteria is defined as
 \begin{equation}
   \text{win}: p_s - p_a > 0.
@@ -125,9 +124,9 @@ Just as easily, one could define winning as
   \text{win}: p_s - p_a > n,
 \end{equation}
 where $n$ is a finite margin-of-victory line.
-This is equivalent to a normal Elo rating system where a point handicap is applied in favor of one team.
+This is equivalent to a normal Elo rating system where a point handicap is applied against one team.
 
-To calculate the probability that a team beats an opponent by more than $n$ points, one need only calculate the Elo ratings of the team and their opponent under an $n$-point team handicap, i.e.\ according to the win criteria
+To calculate the probability that a team beats an opponent by more than $n$ points, one need only calculate the Elo ratings of the team and their opponent under an $n$-point handicap. i.e.\ according to the win criteria
 \begin{equation}
   \text{win}: p_s - p_a - n > 0.
 \end{equation}
@@ -156,10 +155,14 @@ The procedure simply constructs the point spread cumulative distribution functio
 where $s = p_s - p_a$.
 This is the full probability distribution of allowable point spreads and can be used to calculate both the mean and median point values.
 
-We show, as an example, in Fig.~\ref{fig:example} the resulting probability distribution calculated from Eqn.~\eqref{win_prob_hcap} for an NFL game in which the Cleveland Browns host the Pittsburgh Steelers. 
-Note that the sign convention used here is opposite what is typically used in Vegas.
-Negative spreads in Fig~\ref{fig:example} mean Cleveland is an underdog while positive spreads mean they are favored.
-The distribution median, indicated by a vertical orange line, shows that the Browns are significant 7 point underdogs at home.
+We show, as an example, in Fig.~\ref{fig:example} the resulting cumulative probability distribution calculated from Eqn.~\eqref{cdf} for an NFL game in which the Cleveland Browns host the Pittsburgh Steelers. 
+Note that the sign convention used here is opposite what is typically used in Vegas; negative spreads in Fig.~\ref{fig:example} mean Cleveland is an underdog while positive spreads mean they are favored.
+The distribution median, indicated by a vertical orange line, shows that the Browns are significant 5 point underdogs at home.
+
+\begin{figure}
+  \includegraphics{example_distribution}
+  \caption{\label{fig:example} Example cumulative probability distribution function (CDF) of point spreads calculated for a specific matchup from the margin-dependent Elo model (blue line). The distribution's median value is marked by a vertical orange line.}
+\end{figure}
 
 \section{Descriptive Statistics}
 
@@ -190,7 +193,7 @@ The mean point spread can be obtained from the cumulative point spread distribut
   \label{parts}
   \bar{s} = \sum\limits_{s_\text{min}}^{s_\text{max}} s P(s) = s_\text{max} - \sum\limits_{s_\text{min}}^{s_\text{max}} F(s),
 \end{equation}
-where the boundary term in Eqn.~\ref{parts} simplifies since the CDF converges to $F(s_\text{max})=0$ and $F(s_\text{min})=1$ at the point spread extrema.
+where the boundary term in Eqn.~\eqref{parts} simplifies since the CDF converges to $F(s_\text{max})=0$ and $F(s_\text{min})=1$ at the point spread extrema.
 
 The mean and median are, in general, equal only for symmetric distributions and may differ significantly in lopsided matchups where Elo differences are large.
 Such differences are particularly informative when predicting spread outcomes away from the median expectation value, e.g.\ when predicting a blowout. 
@@ -199,12 +202,11 @@ Such differences are particularly informative when predicting spread outcomes aw
 
 \begin{figure}
   \includegraphics{ratings}
-  \caption{Predicted mean points scored and mean points allowed against a league average opponent calculated for each team in week 12 of the 2017 NFL season using the margin-dependent Elo model.}
-  \label{fig:ratings}
+  \caption{\label{fig:ratings} Predicted mean points scored and mean points allowed against a league average opponent calculated for each team in week 12 of the 2017 NFL season using the margin-dependent Elo model.}
 \end{figure}
 
 In addition to the point spread $s = p_s - p_a$, it's also possible to predict the distribution of \emph{total} points scored $t = p_s + p_a$.
-The point total and point spread values represent symmetric and asymmetric components of the two teams' point distributions and form an orthogonal basis for the game score. 
+The point spread and point total values represent symmetric and asymmetric components of the two teams' point distributions and form an orthogonal basis for the game score. 
 
 Point total ratings can be constructed in an analogous fashion to the aforementioned point spread ratings by using an Elo win criteria with the modified form
 \begin{equation}
@@ -233,52 +235,38 @@ We observe that the points scored and points allowed by each team are just ortho
 \end{align}
 where $\bar{s}$ is the average point spread and $\bar{t}$ the average point total.
 
-For example, one interesting application is to use Eqn.~\eqref{points} to predict the points scored and points allowed by every team in a league against a league average opponent.
+For example, one interesting application is to use Eqn.~\eqref{points} to predict the points scored and points allowed by every team against a league average opponent.
 Scatter plotting each team's points scored and points allowed will then give us an indication of which teams are strong offensively (score many points) and which teams are strong defensively (allow few points).
 
 We demonstrate such a calculation in Fig.~\ref{fig:ratings} where we show the projected points scored and points allowed for each team against a league average opponent in week 12 of the 2017 NFL season.
-Note that higher points scored and lower points allowed tend to correlate with stronger offenses and defenses respectively, but the correspondence is not one-to-one as defense may score points and offenses may give up points.
+Note that higher points scored and lower points allowed tend to correlate with stronger offenses and defenses respectively, but the correspondence is not one-to-one as a defense may score points and an offense may give up points.
 
-\begin{figure}[b]
+\section{Applying the model to the NFL}
+
+In this section we explain in detail our application of the aforementioned margin-dependent Elo rating system to the National Football League (NFL) using game data from 2009--2017.
+The purpose of this section is to demonstrate the efficacy of the proposed model in a real world scenario and to give examples of specific model calculations which are not possible using existing Elo methods.
+We also explain several modifications which were necessary to tailor the margin dependent Elo model to the problem at hand.
+
+We emphasize that the present model cannot be used to ``beat Vegas'', at least in the usual sense, as we do not account for weather, injuries or personnel changes which contribute significantly to NFL betting lines.
+Nevertheless, the point spread and point total distributions calculated from the margin-dependent Elo model are surprisingly consistent with opening betting lines and contain a wealth of novel information.
+
+\subsection{Initializing the Elo ratings}
+
+\begin{figure}
   \includegraphics{home_field}
-  \caption{Ratio of probabilities of observing a home field biased point spread over an unbiased point spread as a function of point spread. The blue line denotes calculations derived from NFL game scores and the orange line model predictions from margin-dependent Elo ratings. Model predictions are drawn from samples of the model's predicted point spread distribution for each game. The effect of no home field advantage is indicated by a gray dashed line for reference.}
-  \label{fig:home_field}
+  \caption{\label{fig:home_field} Ratio of probabilities of observing a home field biased point spread over an unbiased point spread as a function of point spread. The blue line denotes calculations derived from NFL game scores and the orange line model predictions from margin-dependent Elo ratings. Model predictions are drawn from samples of the model's predicted point spread distribution for each game. The effect of no home field advantage is indicated by a black dashed line for reference.}
 \end{figure}
 
 \begin{figure*}
   \includegraphics{team_history}
-  \caption{Handicapped NFL team Elo ratings 2009--present. Colored lines denote different handicaps. Dark blue denotes a handicap of 0 points and dark red a handicap of 40 points. Intermediate colors are constant handicap increments of 5 points. Ratings for Rams and Chargers persist through relocation. Not shown: advantaged ratings which mirror handicapped ratings.}
+  \caption{\label{fig:history} Handicapped NFL team Elo ratings 2009--2017. Colored lines denote different handicaps. Dark blue denotes a handicap of 0 points and dark red a handicap of 50 points. Intermediate colors are constant handicap increments of 5 points. Ratings for Rams and Chargers persist through relocation. Not shown: advantaged ratings which mirror handicapped ratings.}
 \end{figure*}
 
+In the original Elo model, it is customary to initialize all ratings with the same value. 
+However, for the margin-dependent model, matters are slightly more complicated since one requires a different starting value for each value of the point spread (or point total).
+These starting values should be chosen such that all teams sample points from minimum bias distributions, i.e.\ teams should be interchangeable and sample scores generically.
 
-\section{Applying the model to the NFL}
-
-\begin{figure}
-  \includegraphics{mean_abs_error}
-  \caption{Mean absolute error of NFL point spread residuals calculated for years 1979--2017. Blue points are Vegas betting lines from Ref.~\ref{?}, and orange points are calculations from the margin-dependent Elo model. The horizontal dashed line is the mean absolute error of a ``dumb'' model which predicts fixed spread of zero for each game.}
-  \label{fig:mean_abs_error}
-\end{figure}
-
-\begin{figure*}
-  \includegraphics{predict}
-  \caption{NFL score predictions determined from the margin-dependent Elo model for the second week of the 2017 season. Orange dashes are the prediction medians, boxes are the 25--75\% inner-quartile range, and whiskers cover 90\% of the distribution tails. Home field advantage was accounted for by handicapping the away team 60 Elo points.}
-\end{figure*}
-
-In this section we apply the aforementioned margin-dependent Elo rating system to the National Football League (NFL) using game data from 2009--present.
-All game data was acquired using the open source \texttt{nfldb} Python package written by Andrew Gallant.
-The purpose of this section is to demonstrate the efficacy of the proposed model in a real world scenario and to give examples of specific model calculations which are not possible using existing Elo methods.
-We emphasize that the proposed model cannot be used to ``beat Vegas'', at least in the usual sense, as we do not account for weather, injuries or personnel changes which contribute significantly to NFL betting lines.
-Nevertheless, the point spread and point total distributions calculated from the margin-dependent Elo model predict median values surprisingly close to opening betting lines and contain a wealth of novel information.
-
-\subsection{Initializing the Elo ratings}
-
-In the original Elo model, it is customary to initialize ratings using a single standard starting value. 
-Initializing the margin-dependent Elo model is slightly more nuanced as we require a starting Elo rating for each value of the point spread (or point total), and these values are all interrelated.
-
-The correct starting criteria for the original Elo model requires that each team start with an equal probability to win.
-Similarly, the correct starting criteria for the margin-dependent Elo model is to require that each team start by sampling point spreads and point totals from a minimum bias distribution.
-
-We enforce this starting criteria by calculating the minimum bias distribution of point spreads and point totals from historical NFL scores and using this distribution to solve for the starting Elo ratings which are required to sample from the observed distribution.
+We enforce this starting criteria by calculating the minimum bias distribution of point spreads and point totals from historical NFL games and using them to derive starting Elo rating values which reproduce the observed distributions.
 For example, the formula for initializing the point spread Elo ratings can be determined by inverting Eqn.~\eqref{win_prob_hcap} and is given by
 \begin{equation}
   \mathcal{R}_\text{init}(\pm n) = \mathcal{R}_0 \mp \frac{1}{2} \log\left(1/P - 1 \right),
@@ -293,7 +281,7 @@ Clearly, current Elo ratings cannot reliably predict team performance far into t
 In fact, such predictions would likely yield little or no information at all.
 The information in the Elo ratings begins to decay and regress towards the mean the moment they are updated after a game.
 This effect exists between subsequent games in the regular season, but it is largely negligible compared the much larger lapse in time between individual seasons.
-To better account for hard to quantify changes that occur during the offseason, we follow the method used by FiveThirtyEight and regress each team rating toward its mean handicap value by a fixed percentage each offseason.
+To better account for hard to quantify changes that occur during the offseason, we follow the method used by FiveThirtyEight and regress each team rating toward its mean handicap value by a fixed percentage each offseason \cite{538NFL, 538NBA}.
 We find that regressing each rating to 64\% of its starting value each season for point spreads and 70\% for point totals leads to the best description of game outcomes.
 
 \subsection{Home field advantage}
@@ -307,38 +295,91 @@ The margin-dependent Elo model admits an exceptionally simple and intuitive meth
 One can think of home field advantage as a temporary boost to a team's Elo rating, i.e.\ teams with home field advantage play like slightly better versions of themselves.  
 Home field advantage can thus be incorporated by increasing the Elo gap between home teams and away teams by a constant offset $\mathcal{R}_\text{hfa}$ which we assume to be equal at every value of the handicap, i.e.\
 \begin{equation}
+  \label{hfa}
   \Delta \mathcal{R} = \mathcal{R}_\text{home} - \mathcal{R}_\text{away} + \mathcal{R}_\text{hfa}.
 \end{equation}
 This means, for instance, that losses which occur on the road are penalized less heavily than losses which occur at home since they are modeled as if the opponent had a slightly higher Elo rating.
-Additionally, when predicting the outcome of future matches, one must also add $\mathcal{R}_\text{hfa}$ to the matchup's Elo difference $\Delta \mathcal{R}$ in favor of the home team to account for their advantage.
+Additionally, when predicting the outcome of future matches, one must also add $\mathcal{R}_\text{hfa}$ to the matchup's Elo difference to account for the home team's advantage.
 
-Remarkably, we find that this simple ansatz can reproduce the actual effect of home field advantage, not just on average, but also as a function of point spread.
-A good way to examine the effect of home field advantage is to look at the relative change in the distribution of point spreads when I always define the point spread relative to the home team, versus when I define the point spread relative to either team with equal probability.
-This ratio of biased and unbiased distributions, plotted in Fig.~\ref{fig:home_field}, clearly shows the effect of home field advantage on the point spread distribution as a function of the point spread, and illustrates that the aforementioned ansatz captures the salient features of the observed transformation up to statistical fluctuations.
+We can quantify the effect of home field advantage by histogramming the home-field biased and unbiased point spreads,
+\begin{align}
+  s_\text{biased} &= \{p_\text{home} - p_\text{away}\},\nonumber \\
+  s_\text{unbiased} &= \{p_\text{home} - p_\text{away}\} \cup \{p_\text{away} - p_\text{home}\},
+\end{align}
+and normalizing each set of binned counts before dividing both histograms.
+We plot this ratio (blue line) in Fig.~\ref{fig:home_field}, and compare its value to the equivalent quantity derived from model predictions (orange line) with $\mathcal{R}_\text{hfa} = 56$ points.
+The model predictions with a home field advantage correction implemented according to Eqn.~\eqref{hfa} are in excellent agreement with the data and illustrate the robustness of the present implementation. 
+Moreover, we demonstrate that the home field advantage implemented in this work has the desired effect on the entire point spread distribution, not just its average value. 
 
 \subsection{Validation}
 
-The principle quantity underlying the present application of the margin-dependent Elo ratings to the NFL is a time series of Elo ratings for each team in the NFL for each value of the handicap.
-As described previously in the text, the algorithm can be slightly modified to calculate either point spreads and point totals.
+\begin{figure}
+    \includegraphics{mean_abs_error}
+    \caption{\label{fig:mean_abs_error} Mean absolute error of NFL point spread residuals calculated for years 1979--2017. Blue points are Vegas betting lines from Ref.~\cite{vegaslines}, and orange points are calculations from the margin-dependent Elo model. The horizontal dashed line is the mean absolute error of a ``dumb'' model which predicts fixed spread of zero for each game.}
+\end{figure}
 
-We test the margin-dependent Elo model by back testing on historical NFL game data.
-The model predicts a distribution of point spread and point totals for each game so it is important to distinguish between the model's accuracy and its precision. 
-For example, a model that predicts that all NFL point totals will be less than a thousand is precise but inaccurate.
+\begin{figure}
+  \includegraphics{percentiles}
+  \caption{\label{fig:percentiles} Difference between the list of ordered percentiles obtained from back-testing model predictions, and the list of ordered percentiles obtained from sampling a uniform distribution (red line).
+For accurate models which correctly estimate their own uncertainties, 95\% of the percentile errors should fall within the gray band, calculated by comparing different samples from a uniform distribution.
+  We also show, for reference purposes, the same percentile errors calculated from a broken model where the Elo model predictions are matched with random games (green line).
+  }
+\end{figure}
 
-A commonly used measure to test the accuracy of NFL betting models is the mean absolute error, defined as the arithmetic mean of the absolute value of model residuals.
-We compare the mean absolute error of the margin-dependent Elo model against Vegas lines  for years {1978--2017}.
-Unfortunately, the NFL stats database used to calculate the present margin-dependent Elo ratings only extends back as far as 2009, and the Vegas lines used in Fig.~\ref{fig:mean_abs_error} only extends through 2013.
+The margin-dependent Elo model constructs a time series of Elo ratings for each team and for each value of the point spread or point total.
+Figure~\ref{fig:history} shows, for illustration purposes, the handicapped Elo point spread ratings obtained from the model once it has been applied to the NFL.
+These ratings, once furnished, can then be used to predict point spreads and point totals for any game, using the information that was available at the time.
+
+The model predicts a \emph{distribution} of point spreads and point totals for each game so it is important to distinguish between the model's accuracy and its precision. 
+For example, a model that predicts that all NFL point totals will be less than a thousand is accurate but imprecise.
+Conversely, a model which predicts that every game will have a point total of zero is precise but inaccurate.
+
+A commonly used measure to test NFL betting models is the mean absolute error, defined as the arithmetic mean of the absolute value of model residuals.
+Figure~\ref{fig:mean_abs_error} compares the mean absolute error of the model against available Vegas betting lines for years where either data is available \footnote{The \texttt{nfldb} database includes years 2009--present. The Vegas lines are for years 1978--2013.}.
+Although our source of historical NFL betting lines is limited, we clearly see that the model residuals are of similar magnitude to Vegas lines, albeit slightly worse for years which overlap.
+
+\begin{figure*}
+  \includegraphics{predict}
+  \caption{\label{fig:predict} NFL score predictions determined from the margin-dependent Elo model for the second week of the 2017 season. Black dashes are the prediction medians, boxes are the 25--75\% inner-quartile range, and whiskers cover 90\% of the distribution tails. Home field advantage was accounted for in the spreads by handicapping the away team 56 Elo rating points.}
+\end{figure*}
+
+Moreover, we can assess the accuracy of the model using the distribution of sampled point spread percentiles calculated from Eqn.~\eqref{cdf}.
+Suppose, for instance, that our model predicts statistically accurate probability distributions for each game's point spread, i.e.\ nature samples the model's predicted CDF.
+This would imply that the distribution of percentiles $F$ is that of a uniform random variable. 
+One can thus quantify the accuracy of the model by comparing the list of ordered percentiles $F$, determined by the model and observed point spreads, to a uniform CDF partition. 
+
+Typically, this is accomplished using what's known as a quantile-quantile plot, where the model percentiles are scatter plotted against a uniform partition from 0 to 1.
+In this work, we choose a slightly different visualization method and plot in Fig.~\ref{fig:percentiles} the \emph{difference} between the ordered model percentiles and the percentiles drawn from a uniform partition of the CDF.
+If the present model were perfectly accurate, its percentile samples would be that of a uniform random variable which fall within the figure's gray band 95\% of the time.
+
+We see that the actual model calculations (red line) generally fall within this confidence interval and hence are quite good.
+This suggests that the margin-dependent Elo model correctly estimates it's own uncertainty when predicting the distribution of future point spreads.
+Moreover, we can see that the agreement is largely nontrivial by breaking the model so that the model predictions are matched with randomly selected point spreads (green line).
+In this case, the ``broken'' model predictions largely fall outside the 95\% confidence interval which indicates poor accuracy.
+This indicates that the present model predictions are not just accurate---the obtained accuracy is also nontrivial.
+
+\subsection{Application}
+
+The margin-dependent Elo model predicts probability distributions for the outcomes of games, either point spreads or point totals, which can easily be visualized as box plots, violin plots or through similar visualization methods.
+The advantage of presenting the information as a probability distribution, is that it emphasizes the noisy and highly uncertain nature of NFL games, information which is not conveyed by a single Vegas point spread or point total.
+
+We apply the present model to week 2 of the 2017 NFL season in Fig.~\ref{fig:predict} to illustrate the probabilistic nature of the model.
+Interestingly, both the mean and width of the distributions vary from game to game which indicates that some games outcomes are less certain than others.
+
+It is of course possible to use these distributions to predict the probability that a game's point spread (or total) falls above or below a given line, and hence estimate a bet's expected return on investment assuming perfect model accuracy.
+We find however, that in practice such a betting scheme will not make one rich as it neglects significant sources of external information which affect the game's expected outcome.
+For example, blithely applying the present model to predict the point total of a snowy game in Detroit would likely over estimate the points scored.
 
 \section{Concluding remarks}
 
-In this work, we formulate a simple extension to the original Elo model which generalizes the algorithm from binary win/loss predictions to full probability distributions of point spread and point total outcomes.
-The generalized model allows us to predict the median and mean scores, as well as any other statistical quantity which can be derived from the underlying point distributions, for instance the interquartile ranges. 
+In this work, we formulated a simple extension to the original Elo model which generalizes the algorithm from binary win-loss predictions to full probability distributions of point spread and point total outcomes.
+The generalized model allows us to predict the median and mean point scores, as well as any other statistical quantity which can be derived from the underlying point distributions, for instance the interquartile ranges. 
 
-We have applied the model to the NFL for the years 2009--present and shown how the algorithm can be used to generate predictions for each game.
+We have applied the model to the NFL for the years 2009--2017 and shown how the algorithm can be used to generate predictions for each game.
 Moreover, we explain how the point spread and point total predictions can be combined to predict the points each team would score and allow against a league average opponent. 
 
 The model is back tested to assess the distribution of model residuals.
-Our findings indicate the probabilistic predictions are highly precise with accuracy that are comparable, albeit slightly worse, than Vegas betting lines.
+Our findings indicate the probabilistic predictions are highly accurate with a mean absolute error that is comparable to, albeit slightly worse than, Vegas betting lines.
 Naturally, the model's accuracy would benefit from additional factors such as personnel changes, weather and extraneous circumstances which are already accounted for in betting lines.
 
 We emphasize that the present algorithm should readily generalize to any point based competitive game.
