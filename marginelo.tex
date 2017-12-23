@@ -24,7 +24,7 @@
 \author{J.\ Scott Moreland}
 \affiliation{Department of Physics, Duke University, Durham, NC 27708-0305}
 \author{Matthew C.\ Superdock}
-\affiliation{Department of Computer Science, Carnegie Mellon University, Pittsburgh, PA 15213}
+\affiliation{Department of Mathematical Sciences, Carnegie Mellon University, Pittsburgh, PA 15213}
 
 \date{\today}
 
@@ -34,7 +34,7 @@ The Elo rating system is a highly successful ranking algorithm for games of skil
 A primary limitation of present implementations of the Elo algorithm is the ability to predict information beyond a match's win-loss probability.
 For example, in the traditional Elo system the victor is awarded the same point bounty if he beats a team by 1 point or 10 points; only the rating difference between the team and its opponent affects the match bounty.
 Previous efforts to extend the Elo system to incorporate margin-of-victory information have relied on adhoc assumptions which do not converge on the true margin dependent win probability in the relevant limits.
-In this work, we explain that Elo ratings and predictions can be naturally extended to include margin-of-victory information by simply redefining ``what it means to win''.
+  In this work, we explain that Elo ratings and predictions can be naturally extended to include margin-of-victory information by simply redefining \mbox{``what it means to win.''}
 We create ratings for each value of the margin-of-victory and use these ratings to predict the \emph{full} distribution of point spread outcomes for matches which have not yet been played.
 \end{abstract}
 
@@ -80,20 +80,22 @@ A common convention is to fix $\gamma=400$ such that a 400 point rating advantag
 A primary feature of the Elo system is that the expected win probability $P_\text{exp}$ determined from iteratively updated Elo ratings $\R_\text{team}$ and $\R_\text{opp}$, converges on the \emph{true} win probability of the matchup when the competitors sample scores from independent random variables.
 In the limit of infinitely many games and infinitely small update factor $\kappa$, the Elo calculated win probability \emph{is} the true win probability.
 
-We demonstrate this convergence property of the Elo algorithm by simulating a series of games between two different teams using a simple a toy model.
-The teams are represented by a Poisson distribution with two different means, one with mean $\mu=16$ and the other with mean $\mu=10$.
-We sampled a pair of scores for each game, determine a winner, and update each team's Elo ratings accordingly.
-Figure~\ref{fig:win_rate} compares the spread distribution's true win rate (top black line), to the win rate calculated from Eqn.~\eqref{win_prob} (top blue line).
-The two quantities agree within statistical fluctuations, as the Elo ratings naturally trend toward equilibrium.
-For instance, if one Elo rating becomes artificially inflated by a series of statistically anomalous wins, it is heavily penalized by any subsequent losses and trends back toward its equilibrium value.
+We demonstrate this convergence property of the Elo algorithm by constructing a simple toy model where we know the underlying distributions used to sample scores.
+Consider a league of eight different teams which each sample $k$ points from a Poisson distribution, i.e.\
+\begin{equation}
+  P(k; \lambda), \quad \text{with } \lambda \in [17, 19, 21, 22, 23, 25, 27, 29]
+\end{equation}
+for each team.
+We randomly select a pair of Poisson distributions, sample the points scored by each distribution, and update the Elo ratings of both teams accordingly using a small update factor $\kappa = 0.005$.
+The process is then repeated a large number of times to relax each team's Elo rating to its equilibrium value.
+Once the Elo histories are known, we calculate the probability that each team in the league will outscore the team with $\lambda=22$ using Eqn.~\eqref{win_prob}.
 
-Below these two lines, we also show the distribution's true and Elo projected win probabilities when a $n$-point handicap is applied to the stronger team.
-Figure~\ref{fig:win_rate} shows that as the handicap $n \in [0, 3, ..., 12]$ points increases, the probability that the stronger team overcomes the handicap to win by that margin of victory decreases, and hence their handicapped win rate falls.
-This procedure, which we describe at length in the following section, alludes to the fundamental premise of this work---that Elo ratings can be extended to predict more than mere win-loss probabilities.
-They can also be used to predict the probability that teams cover any finite margin-of-victory line.
+Figure \ref{fig:toy_model} compares the resulting predicted win probabilities (solid lines) to the true win probabilities (dashed lines) calculated from samples of each distribution pair.
+We see that the model predictions converge to their true values, which is impressive considering that the matchups are constantly changing.
+
 \begin{figure}
-  \includegraphics{win_rate}
-  \caption{\label{fig:win_rate} Time series win rate for a toy model with different handicaps (listed on the right) applied to the stronger team. The black horizontal dashed lines are the true win rate of the sampled distribution under the imposed handicap and the blue solid line is the reconstructed (predicted) win rate determined by updating handicapped and advantaged Elo ratings for each team and applying Eqn.~\eqref{win_prob_hcap}. This particular toy model is a distribution of scores sampled from the difference of two Poisson random variables. The stronger team has a mean score of $16$ and the weaker team a mean of $10$. Notice that the win rate is $\sim\!50\%$ when the handicap equals $6$ points. Actually, to be exact it is slightly below 50\% as the chosen win criteria requires that a team win by \emph{more} than 0.}
+  \includegraphics{toy_model}
+  \caption{\label{fig:toy_model} Time series win rate for a toy model with different handicaps (listed on the right) applied to the stronger team. The black horizontal dashed lines are the true win rate of the sampled distribution under the imposed handicap and the blue solid line is the reconstructed (predicted) win rate determined by updating handicapped and advantaged Elo ratings for each team and applying Eqn.~\eqref{win_prob_hcap}. This particular toy model is a distribution of scores sampled from the difference of two Poisson random variables. The stronger team has a mean score of $16$ and the weaker team a mean of $10$. Notice that the win rate is $\sim\!50\%$ when the handicap equals $6$ points. Actually, to be exact it is slightly below 50\% as the chosen win criteria requires that a team win by \emph{more} than 0.}
 \end{figure}
 
 \section{Margin-of-victory Elo}
