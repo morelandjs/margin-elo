@@ -1,4 +1,4 @@
-\documentclass[aps,prc,reprint,amsmath,superscriptaddress]{revtex4-1}
+\documentclass[aps,prc,reprint,amsmath,superscriptaddress,nofootinbib]{revtex4-1}
 
 \usepackage{color}
 \definecolor{theblue}{RGB}{0,50,230}
@@ -68,29 +68,40 @@ If $\kappa$ is small, the prior holds significant weight, and it takes many succ
 Conversely, when $\kappa$ is large, each win or loss can significantly affect the team's rating.
 Typically, the hyper-parameter $\kappa$ is tuned to optimize the veracity of model predictions by back-testing on historical games.
 
-The expected probability $P_\text{exp}$ that a team beats their opponent is modeled using a logistic function
+The expected probability $P_\text{exp}$ that a team beats an opponent is modeled by a normal distribution\footnote{Both normal and logistic distributions are commonly used in Elo ratings.} 
 \begin{equation}
   \label{win_prob}
-  P_\text{exp}(\R_\text{team}, \R_\text{opp}) = \frac{1}{10^{-(\R_\text{team} - \R_\text{opp})/\gamma} +1},
+  P_\text{exp}(\Delta \R) = \int\limits_{-\infty}^{\Delta \R} \frac{1}{\sqrt{2\pi \sigma^2}} \exp \left( -\frac{{\Delta\R}^2}{2 \sigma^2}\right),
 \end{equation}
-where the free parameter $\gamma$ sets the scale of rating differences.
-Much like the starting Elo, the parameter $\gamma$ can take any value and only the ratio $\kappa/\gamma$ is meaningful for observable quantities.
-A common convention is to fix $\gamma=400$ such that a 400 point rating advantage corresponds to a 90\% average win rate.
+where $\Delta \R = \R_\text{team} - \R_\text{opp}$, and the free parameter $\sigma$ sets the scale of rating differences.
+Much like the starting Elo, the parameter $\sigma$ can take any value and only the ratio $\kappa/\sigma$ is meaningful for observable quantities.
+A common convention is to fix $\sigma=400$ such that a $\Delta \R=400$ point rating advantage corresponds to an 84\% average win rate.
+
+% The expected probability $P_\text{exp}$ that a team beats their opponent is modeled using a logistic function
+% \begin{equation}
+%   \label{win_prob}
+%   P_\text{exp}(\R_\text{team}, \R_\text{opp}) = \frac{1}{10^{-(\R_\text{team} - \R_\text{opp})/\gamma} +1},
+% \end{equation}
+% where the free parameter $\gamma$ sets the scale of rating differences.
+% Much like the starting Elo, the parameter $\gamma$ can take any value and only the ratio $\kappa/\gamma$ is meaningful for observable quantities.
+% A common convention is to fix $\gamma=400$ such that a 400 point rating advantage corresponds to a 90\% average win rate.
 
 A primary feature of the Elo system is that the expected win probability $P_\text{exp}$ determined from iteratively updated Elo ratings $\R_\text{team}$ and $\R_\text{opp}$, converges on the \emph{true} win probability of the matchup when the competitors sample scores from independent random variables.
 In the limit of infinitely many games and infinitely small update factor $\kappa$, the Elo calculated win probability \emph{is} the true win probability.
 
-We demonstrate this convergence property of the Elo algorithm by constructing a simple toy model where we know the underlying distributions used to sample scores.
-Consider a league of eight different teams which each sample $k$ points from a Poisson distribution, i.e.\
+We demonstrate this convergence property of the Elo algorithm by constructing a simple toy model where each team's underlying point distribution is known.
+Consider, for instance, a league of nine different teams which each sample $k$ points from a Poisson distribution $P(k; \lambda$) with one of nine constant means
 \begin{equation}
-  P(k; \lambda), \quad \text{with } \lambda \in [17, 19, 21, 22, 23, 25, 27, 29]
+  \lambda_\text{team} \in [11, 13, 15, 17, 19, 21, 23, 25, 27].
 \end{equation}
-for each team.
-We randomly select a pair of Poisson distributions, sample the points scored by each distribution, and update the Elo ratings of both teams accordingly using a small update factor $\kappa = 0.005$.
+We randomly select a pair of teams, sample the points scored by each team's Poisson distribution, and update the Elo ratings of both teams accordingly using a small update factor $\kappa = 0.005$.
 The process is then repeated a large number of times to relax each team's Elo rating to its equilibrium value.
-Once the Elo histories are known, we calculate the probability that each team in the league will outscore the team with $\lambda=22$ using Eqn.~\eqref{win_prob}.
+Once the Elo histories are known, we use the time series of Elo ratings to predict the probability that each team beats $P(k; \lambda=19)$ according to Eqn.~\eqref{win_prob}.
 
-Figure \ref{fig:toy_model} compares the resulting predicted win probabilities (solid lines) to the true win probabilities (dashed lines) calculated from samples of each distribution pair.
+Figure \ref{fig:toy_model} compares the resulting predicted win probabilities (solid lines) to the true win probabilities (dashed lines) calculated from the procedure.
+
+The Elo derived probabilities agree, to excellent precision, with the exact win probabilities 
+
 We see that the model predictions converge to their true values, which is impressive considering that the matchups are constantly changing.
 
 \begin{figure}
