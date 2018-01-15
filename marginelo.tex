@@ -19,7 +19,7 @@
 
 \begin{document}
 
-\title{Predicting outcomes in games of skill by redefining what it means to win}
+\title{Predicting outcomes for games of skill by redefining what it means to win}
 
 \author{J.\ Scott Moreland}
 \affiliation{Department of Physics, Duke University, Durham, NC 27708-0305}
@@ -31,7 +31,7 @@
 
 \begin{abstract}
 The Elo rating system is a highly successful ranking algorithm for games of skill where, by construction, one team wins and the other loses.
-A primary limitation of present implementations of the Elo algorithm is the ability to predict information beyond a match's win-loss probability.
+A primary limitation of present implementations of the Elo algorithm is the inability to predict information beyond a match's win-loss probability.
 For example, in the traditional Elo system the victor is awarded the same point bounty if he beats a team by 1 point or 10 points; only the rating difference between the team and its opponent affects the match bounty.
 Previous efforts to extend the Elo system to incorporate margin-of-victory information have relied on adhoc assumptions which do not converge on the true margin dependent win probability in the relevant limits.
   In this work, we explain that Elo ratings and predictions can be naturally extended to include margin-of-victory information by simply redefining \mbox{``what it means to win.''}
@@ -68,7 +68,7 @@ If $\kappa$ is small, the prior holds significant weight, and it takes many succ
 Conversely, when $\kappa$ is large, each win or loss can significantly affect the team's rating.
 Typically, the hyper-parameter $\kappa$ is tuned to optimize the veracity of model predictions by back-testing on historical games.
 
-The expected probability $P_\text{exp}$ that a team beats an opponent is modeled by a normal distribution\footnote{Both normal and logistic distributions are commonly used in Elo ratings.} 
+The expected probability $P_\text{exp}$ that a team beats an opponent is modeled by a normal distribution\footnote{Both normal and logistic distributions are commonly used in Elo ratings. The United States Chess Federation, for example, uses a logistic distribution after finding that it better predicts the probability that low rated chess players beat high rated chess players. For the purposes of this work, the difference between the two distributions is negligible.} 
 \begin{equation}
   \label{win_prob}
   P_\text{exp}(\Delta \R) = \int\limits_{-\infty}^{\Delta \R} \frac{1}{\sqrt{2\pi \sigma^2}} \exp \left( -\frac{{\Delta\R}^2}{2 \sigma^2}\right),
@@ -77,44 +77,34 @@ where $\Delta \R = \R_\text{team} - \R_\text{opp}$, and the free parameter $\sig
 Much like the starting Elo, the parameter $\sigma$ can take any value and only the ratio $\kappa/\sigma$ is meaningful for observable quantities.
 A common convention is to fix $\sigma=400$ such that a $\Delta \R=400$ point rating advantage corresponds to an 84\% average win rate.
 
-% The expected probability $P_\text{exp}$ that a team beats their opponent is modeled using a logistic function
-% \begin{equation}
-%   \label{win_prob}
-%   P_\text{exp}(\R_\text{team}, \R_\text{opp}) = \frac{1}{10^{-(\R_\text{team} - \R_\text{opp})/\gamma} +1},
-% \end{equation}
-% where the free parameter $\gamma$ sets the scale of rating differences.
-% Much like the starting Elo, the parameter $\gamma$ can take any value and only the ratio $\kappa/\gamma$ is meaningful for observable quantities.
-% A common convention is to fix $\gamma=400$ such that a 400 point rating advantage corresponds to a 90\% average win rate.
-
-A primary feature of the Elo system is that the expected win probability $P_\text{exp}$ determined from iteratively updated Elo ratings $\R_\text{team}$ and $\R_\text{opp}$, converges on the \emph{true} win probability of the matchup when the competitors sample scores from independent random variables.
-In the limit of infinitely many games and infinitely small update factor $\kappa$, the Elo calculated win probability \emph{is} the true win probability.
-
-We demonstrate this convergence property of the Elo algorithm by constructing a simple toy model where each team's underlying point distribution is known.
-Consider, for instance, a league of nine different teams which each sample $k$ points from a Poisson distribution $P(k; \lambda$) with one of nine constant means
-\begin{equation}
-  \lambda_\text{team} \in [11, 13, 15, 17, 19, 21, 23, 25, 27].
-\end{equation}
-We randomly select a pair of teams, sample the points scored by each team's Poisson distribution, and update the Elo ratings of both teams accordingly using a small update factor $\kappa = 0.005$.
-The process is then repeated a large number of times to relax each team's Elo rating to its equilibrium value.
-Once the Elo histories are known, we use the time series of Elo ratings to predict the probability that each team beats $P(k; \lambda=19)$ according to Eqn.~\eqref{win_prob}.
-
-Figure \ref{fig:toy_model} compares the resulting predicted win probabilities (solid lines) to the true win probabilities (dashed lines) calculated from the procedure.
-
-The Elo derived probabilities agree, to excellent precision, with the exact win probabilities 
-
-We see that the model predictions converge to their true values, which is impressive considering that the matchups are constantly changing.
-
 \begin{figure}
   \includegraphics{toy_model}
-  \caption{\label{fig:toy_model} Time series win rate for a toy model with different handicaps (listed on the right) applied to the stronger team. The black horizontal dashed lines are the true win rate of the sampled distribution under the imposed handicap and the blue solid line is the reconstructed (predicted) win rate determined by updating handicapped and advantaged Elo ratings for each team and applying Eqn.~\eqref{win_prob_hcap}. This particular toy model is a distribution of scores sampled from the difference of two Poisson random variables. The stronger team has a mean score of $16$ and the weaker team a mean of $10$. Notice that the win rate is $\sim\!50\%$ when the handicap equals $6$ points. Actually, to be exact it is slightly below 50\% as the chosen win criteria requires that a team win by \emph{more} than 0.}
+  \caption{\label{fig:toy_model} Time series of Elo win rate predictions for nine teams in a toy-model league where each team samples $k$ points from a Poisson distribution $P(k; \lambda)$ with constant mean $\lambda_\text{team}$, annotated on the figure. The team Elo ratings are updated iteratively by selecting random matchups, sampling points from each team's Poisson distribution, and updating the Elo ratings of both teams based on the outcome of the match. The figure shows each team's predicted win rate (solid lines) against the league average opponent $\lambda_\text{opp} = 19$, calculated from Eqn.~\eqref{win_prob}. The model predictions are compared to exact win rates estimated from direct sample evaluation (dashed lines). All teams start with an equal Elo rating.
+  }
 \end{figure}
+
+A primary feature of the Elo system is that the expected win probability $P_\text{exp}$ determined from iteratively updated Elo ratings $\R_\text{team}$ and $\R_\text{opp}$, converges on the true win probability of the matchup when the competitors sample scores from independent random variables.
+In the limit of infinitely many games and an infinitely small update factor $\kappa$, the Elo calculated win probability equals the true win probability are effectively indistinguishable.
+
+We demonstrate this convergence property of the Elo algorithm by constructing a simple toy model where each team's underlying point distribution is known.
+Consider, for instance, a league of nine different teams which each sample $k$ points from a Poisson distribution $P(k; \lambda$) using one of nine different means ${\lambda_\text{team} \in [11, 13, 15, 17, 19, 21, 23, 25, 27]}$ for each team.
+
+We randomly select a pair of teams, sample the points scored by each team's Poisson distribution, and update the Elo ratings of both teams accordingly using a small update factor $\kappa = 0.005$.
+The process is then repeated a large number of times to relax each team's Elo rating to its equilibrium value.
+Once the Elo histories are known, we use the time series of Elo ratings to postdict the probability that each team beats the league average team $P(k; \lambda\!=\!19)$ at the time the game was played according to Eqn.~\eqref{win_prob}.
+Figure~\ref{fig:toy_model} plots the resulting Elo predicted win probabilities (solid lines) for each matchup and compares them to their corresponding true win rates (dashed lines).
+We find, for all practical purposes, perfect agreement between the Elo model and each matchup's exact win rate calculated by direct sample evaluation.
+
+This procedure is, of course, overkill for an idealized model with nine teams and five million matches played. It would be far easier to simply estimate the win probability for each pair of teams directly based on the outcome of their previous matchups.
+The advantage of Elo ratings is that they do not require an extensive record of games played directly between two teams to predict the probability that either team wins a future matchup. This is because Elo ratings leverage posterior information from \emph{every} match played and not just matches against the opponent of interest.
+This makes Elo rating predictions ideally suited for player-based competitive games where match statistics are limited.
 
 \section{Margin-of-victory Elo}
 
 The original Elo model was first applied to chess rankings where there is a winner and a loser but no score.
 It can be used to predict the odds with which a player beats his opponent \eqref{win_prob}, and correspondingly---by calculating various outcomes---the odds with which a player advances through a tournament. 
 
-The model is easily extended to point based games by ignoring the margin-of-victory and only considering wins and losses.
+The model is easily extended to point based games, as demonstrated in the previous example, by ignoring the margin-of-victory and only considering wins and losses.
 One shortcoming of this approach is that it cannot predict the mean or median point spreads which are often used to set betting lines and which are interesting in their own right.
 Methods have been proposed to retain margin-of-victory information by allowing the parameter $\kappa$ in Eqn.~\eqref{elo} to vary with the point spread.
 The idea is that if a team finds itself in a rating slump, subsequent dominant victories should raise the team's rating faster than successive close wins.
@@ -146,20 +136,20 @@ To calculate the probability that a team beats an opponent by more than $n$ poin
 The handicapping procedure splits team ratings into two different groups: a rating handicapped by $n$ points, and a rating advantaged by $n$ points.
 
 To get a better feel for what this does, imagine an average team under the classical Elo system which corresponds to a handicap $n=0$. 
-As we apply a handicap $n$ to the home team, it becomes increasingly difficult for the team to overcome their handicap and win games.
+As we apply a nonzero handicap $n$ to the home team, it becomes increasingly difficult for the team to overcome their handicap and win games.
 The team's handicapped Elo rating will drop, and eventually will fall below even the worst non-handicapped team.
 Simultaneously, we must also keep track of each team's performance \emph{against} handicapped teams, i.e.\ for $n \rightarrow -n$.
-Naturally, this will have an opposite effect, and each team's advantaged rating will rise as their handicap goes more negative.
+Naturally, this will have an opposite effect, and each team's advantaged rating will rise as their advantage increases.
 
 The procedure thus creates mirror copies of each team's rating at each value of the spread: the handicapped rating $\R_\text{team}(n)$, and advantaged rating $\R_\text{team}(-n)$.
-To predict the probability that a team will beat their opponent by more than $n$ points, we apply Eqn.~\eqref{win_prob} to their handicapped and advantaged Elo ratings
+To predict the probability that a team will beat their opponent by more than $n$ points, we calculate the rating difference between the handicapped team rating and advantaged opponent rating
 \begin{equation}
-  \label{win_prob_hcap}
-  P_\text{exp}(\R_\text{team}, \R_\text{opp}; n) = \frac{1}{10^{-(\R_\text{team}(n) - \R_\text{opp}(-n))/\gamma} + 1}.
+  \Delta\R = \R_\text{team}(n) - \R_\text{opp}(-n)
 \end{equation}
+and apply Eqn.~\eqref{win_prob} to the result as before.
 
-The procedure can easily be applied for each integer value of $n$ up to some large number in order to calculate the margin-dependent Elo ratings for every reasonable margin-of-victory.
-Once done, the resulting ratings can be used to predict the probability that a team beats its opponent by any point number.
+The procedure can easily be repeated for each integer value of $n$ spanning a range of spreads to calculate the margin-dependent Elo ratings for every reasonable margin-of-victory.
+The resulting ratings can then be used to predict the probability that a team beats its opponent by any point number.
 The procedure simply constructs the point spread cumulative distribution function (CDF) for the team of interest
 \begin{equation}
   \label{cdf}
